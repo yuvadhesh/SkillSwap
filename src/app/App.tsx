@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
+import { API_URL } from '../config.ts';
 import { io } from 'socket.io-client';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -42,8 +43,10 @@ interface ActivityLogItem {
 const USERS_STORAGE_KEY = 'SKILLSWAP_USERS';
 
 async function safeFetchJson(url: string, options?: RequestInit) {
+  // Prepend API base URL for relative paths
+  const fullUrl = url.startsWith('http') ? url : `${API_URL}${url}`;
   try {
-    const response = await fetch(url, options);
+    const response = await fetch(fullUrl, options);
     let data: any = {};
     const text = await response.text();
     if (text) {
