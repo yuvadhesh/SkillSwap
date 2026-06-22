@@ -130,30 +130,67 @@ app.post('/api/register', async (req, res) => {
     return res.status(400).json({ error: 'Please fill in all fields.' });
   }
 
-  try {
-    const existingUser = await db.getUserByEmail(email);
-    if (existingUser) {
-      return res.status(400).json({ error: 'An account with this email already exists.' });
-    }
+  // try {
+  //   const existingUser = await db.getUserByEmail(email);
+  //   if (existingUser) {
+  //     return res.status(400).json({ error: 'An account with this email already exists.' });
+  //   }
 
-    const fullName = `${firstName} ${lastName}`;
-    const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(password, salt);
+  //   const fullName = `${firstName} ${lastName}`;
+  //   const salt = await bcrypt.genSalt(10);
+  //   const hashedPassword = await bcrypt.hash(password, salt);
     
-    const newUser = await db.createUser({
-      name: fullName,
-      email,
-      skillOffer,
-      skillWant,
-      password: hashedPassword
-    });
+  //   const newUser = await db.createUser({
+  //     name: fullName,
+  //     email,
+  //     skillOffer,
+  //     skillWant,
+  //     password: hashedPassword
+  //   });
 
-    res.status(201).json({ success: true, user: newUser });
-  } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'An error occurred during registration.' });
-  }
-});
+  //   res.status(201).json({ success: true, user: newUser });
+  // }// catch (error) {
+  // //   console.error('Registration error:', error);
+  // //   res.status(500).json({ error: 'An error occurred during registration.' });
+  // // }
+  // catch (error) {
+  // console.error('Registration error:', error);
+  try {
+  console.log("1");
+  const existingUser = await db.getUserByEmail(email);
+
+  console.log("2");
+  const fullName = `${firstName} ${lastName}`;
+
+  console.log("3");
+  const salt = await bcrypt.genSalt(10);
+
+  console.log("4");
+  const hashedPassword = await bcrypt.hash(password, salt);
+
+  console.log("5");
+  const newUser = await db.createUser({
+    name: fullName,
+    email,
+    skillOffer,
+    skillWant,
+    password: hashedPassword
+  });
+
+  console.log("6");
+  res.status(201).json({ success: true, user: newUser });
+
+} catch (error) {
+  console.error(error);
+}
+
+  res.status(500).json({
+    error: 'An error occurred during registration.',
+    message: error.message,
+    stack: error.stack
+  });
+}
+);
 
 app.post('/api/login', async (req, res) => {
   const { email, password } = req.body;
