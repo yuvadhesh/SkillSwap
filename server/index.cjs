@@ -99,7 +99,9 @@ const io = new Server(server, {
 app.use(cors({
   origin: [
     'http://localhost:5173',
-    'https://skill-swap-seven-eta.vercel.app'
+    'https://skill-swap-seven-eta.vercel.app',
+    'https://skill-swap-hsgx3ysf3-yuvadheshs-projects.vercel.app'
+
   ],
   credentials: true
 }));
