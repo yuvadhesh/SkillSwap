@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2 } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
-import { API_URL } from '../config.ts';
+import { API_URL } from '../config.js';
 import { io } from 'socket.io-client';
 import { DayPicker } from 'react-day-picker';
 import 'react-day-picker/dist/style.css';
@@ -23,7 +23,7 @@ interface UserData {
   bio?: string;
   rating?: number;
   exchanges?: number;
-  memberSince?: number;
+  // memberSince?: number;
   memberSince?: number;
   settings?: {
     visibility: boolean;
@@ -208,6 +208,8 @@ export default function App() {
               }}
               userInfo={{
                 displayName: user.name,
+                email: user.email
+
               }}
               getIFrameRef={(iframeRef) => {
                 iframeRef.style.height = '100%';
@@ -745,7 +747,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
                 requests={requests}
                 fetchRequests={fetchRequests}
                 setActiveChatUser={setActiveChatUser}
-                setActiveBookingUser={setActiveBookingUser}
+                // setActiveBookingUser={setActiveBookingUser}
               />
             )}
             {activeTab === 'chatbot' && (
