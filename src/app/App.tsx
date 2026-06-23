@@ -226,7 +226,7 @@ export default function App() {
 
 function RegisterPage({ onNavigate, onRegister }: { onNavigate: () => void; onRegister: (e: React.FormEvent<HTMLFormElement>) => void }) {
   return (
-    <div className="w-full h-[600px] bg-background rounded-[10px] overflow-hidden shadow-lg">
+    <div className="w-full h-screen bg-background rounded-[10px] overflow-hidden shadow-lg">
       <div className="grid grid-cols-2 h-full">
         <AuthLeft
           title="Trade skills, grow together."
@@ -323,7 +323,7 @@ function RegisterPage({ onNavigate, onRegister }: { onNavigate: () => void; onRe
 
 function LoginPage({ onNavigate, onForgot, onLogin }: { onNavigate: () => void; onForgot: () => void; onLogin: (e: React.FormEvent<HTMLFormElement>) => void }) {
   return (
-    <div className="w-full h-[600px] bg-background rounded-[10px] overflow-hidden shadow-lg">
+    <div className="w-full h-screen bg-background rounded-[10px] overflow-hidden shadow-lg">
       <div className="grid grid-cols-2 h-full">
         <AuthLeft
           title="Welcome back, skill trader."
@@ -402,7 +402,7 @@ function ForgotPasswordPage({ onBack }: { onBack: () => void }) {
   };
 
   return (
-    <div className="w-full h-[600px] bg-background rounded-[10px] overflow-hidden shadow-lg">
+    <div className="w-full h-screen bg-background rounded-[10px] overflow-hidden shadow-lg">
       <div className="grid grid-cols-2 h-full">
         <AuthLeft title="Forgot Password" subtitle="Enter your email to receive a password reset link." />
         <div className="bg-background p-10 flex flex-col justify-center">
@@ -453,7 +453,7 @@ function ResetPasswordPage({ token, onBack, onComplete }: { token: string; onBac
   };
 
   return (
-    <div className="w-full h-[600px] bg-background rounded-[10px] overflow-hidden shadow-lg">
+    <div className="w-full h-screen bg-background rounded-[10px] overflow-hidden shadow-lg">
       <div className="grid grid-cols-2 h-full">
         <AuthLeft title="Set New Password" subtitle="Create a new, secure password for your account." />
         <div className="bg-background p-10 flex flex-col justify-center">
@@ -678,7 +678,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
   };
 
   return (
-    <div className="w-full h-[600px] bg-[#f5f5f7] rounded-[10px] overflow-hidden shadow-lg">
+    <div className="w-full h-screen bg-[#f5f5f7] rounded-[10px] overflow-hidden shadow-lg">
       <div className="grid grid-cols-[220px_1fr] h-full">
         <Sidebar activeTab={activeTab} onTabChange={onTabChange} onLogoutClick={() => setShowLogoutModal(true)} matchesCount={matches.length} requestsCount={requests.incoming.filter(r => r.status === 'pending').length} isAdmin={isAdmin} />
 
