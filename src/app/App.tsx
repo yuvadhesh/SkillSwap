@@ -606,7 +606,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
 
   useEffect(() => {
     if (!user.email) return;
-    const globalSocket = io('http://localhost:5000');
+    const globalSocket = io(API_URL);
     
     globalSocket.on('connect', () => {
       globalSocket.emit('join_global', user.email);
@@ -728,7 +728,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
                 )}
               </div>
               <div onClick={() => onTabChange('profile')} className="w-[34px] h-[34px] rounded-full bg-[var(--brand)] flex items-center justify-center text-[13px] font-semibold text-white cursor-pointer overflow-hidden">
-                {user.profilePhoto ? <img src={`http://localhost:5000${user.profilePhoto}`} alt={user.name} className="w-full h-full object-cover" /> : user.initials}
+                {user.profilePhoto ? <img src={`${API_URL}${user.profilePhoto}`} alt={user.name} className="w-full h-full object-cover" /> : user.initials}
               </div>
             </div>
           </div>
@@ -1206,7 +1206,7 @@ function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdat
     <div>
       <div className="bg-background border border-border rounded-lg p-6 flex gap-5 items-start mb-4">
         <div className="relative group w-16 h-16 rounded-full bg-[var(--brand)] flex items-center justify-center text-white text-[22px] font-bold flex-shrink-0 overflow-hidden cursor-pointer" onClick={() => setShowPhotoModal(true)}>
-          {user.profilePhoto ? <img src={`http://localhost:5000${user.profilePhoto}`} alt={user.name} className="w-full h-full object-cover" /> : user.initials}
+          {user.profilePhoto ? <img src={`${API_URL}${user.profilePhoto}`} alt={user.name} className="w-full h-full object-cover" /> : user.initials}
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
             <Camera className="w-5 h-5 text-white" />
           </div>
@@ -1353,7 +1353,7 @@ function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdat
                   <button 
                     onClick={async () => {
                       try {
-                        const res = await fetch('http://localhost:5000/api/profile/photo/remove', {
+                        const res = await fetch(`${API_URL}/api/profile/photo/remove`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ email: user.email })
@@ -1385,7 +1385,7 @@ function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdat
               formData.append('email', user.email);
               formData.append('photo', file);
               try {
-                const res = await fetch('http://localhost:5000/api/profile/photo', {
+                const res = await fetch(`${API_URL}/api/profile/photo`, {
                   method: 'POST',
                   body: formData,
                 });
@@ -2672,7 +2672,7 @@ function ChatWindow({ currentUser, chatPartner, onClose, setActiveBookingUser, o
   };
 
   useEffect(() => {
-    const socketInstance = io('http://localhost:5000');
+    const socketInstance = io(API_URL);
     setSocket(socketInstance);
 
     socketInstance.emit('join_room', { sender: currentUser.email, receiver: chatPartner.email });
@@ -2860,7 +2860,7 @@ function ChatWindow({ currentUser, chatPartner, onClose, setActiveBookingUser, o
                       {msg.fileType === 'video' ? (
                         <div className="mt-1 mb-1 rounded-lg overflow-hidden border border-border bg-black/10 max-w-full">
                           <video 
-                            src={`http://localhost:5000${msg.fileUrl}`} 
+                            src={`${API_URL}${msg.fileUrl}`} 
                             controls 
                             className="max-w-full max-h-[160px] object-contain rounded-md"
                           />
@@ -2868,15 +2868,15 @@ function ChatWindow({ currentUser, chatPartner, onClose, setActiveBookingUser, o
                       ) : msg.fileType === 'image' ? (
                         <div className="mt-1 mb-1 rounded-lg overflow-hidden border border-border bg-black/5 max-w-full">
                           <img 
-                            src={`http://localhost:5000${msg.fileUrl}`} 
+                            src={`${API_URL}${msg.fileUrl}`} 
                             alt={msg.fileName || "Shared image"} 
                             className="max-w-full max-h-[160px] object-cover cursor-pointer rounded-md hover:opacity-90 transition-opacity"
-                            onClick={() => window.open(`http://localhost:5000${msg.fileUrl}`, '_blank')}
+                            onClick={() => window.open(`${API_URL}${msg.fileUrl}`, '_blank')}
                           />
                         </div>
                       ) : (
                         <a 
-                          href={`http://localhost:5000${msg.fileUrl}`} 
+                          href={`${API_URL}${msg.fileUrl}`} 
                           target="_blank" 
                           rel="noopener noreferrer" 
                           className={`flex items-center gap-2 p-2 rounded-lg border text-left cursor-pointer transition-colors max-w-full ${
