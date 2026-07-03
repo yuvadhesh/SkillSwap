@@ -1,0 +1,999 @@
+
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --brand: #1a6b4a;
+    --brand-light: #e6f5ef;
+    --brand-mid: #2d9e6e;
+    --brand-dark: #0d3d2a;
+    --accent: #f0a500;
+    --accent-light: #fff8e6;
+    --surface: var(--color-background-primary);
+    --surface2: var(--color-background-secondary);
+    --surface3: var(--color-background-tertiary);
+    --border: var(--color-border-tertiary);
+    --border2: var(--color-border-secondary);
+    --text1: var(--color-text-primary);
+    --text2: var(--color-text-secondary);
+    --text3: var(--color-text-tertiary);
+    --font-head: 'Syne', sans-serif;
+    --font-body: 'DM Sans', sans-serif;
+    --radius: var(--border-radius-lg);
+    --radius-sm: var(--border-radius-md);
+  }
+
+  #app {
+    font-family: var(--font-body);
+    color: var(--text1);
+    min-height: 600px;
+    background: var(--surface3);
+    border-radius: var(--radius);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .page { display: none; }
+  .page.active { display: block; }
+
+  /* ── AUTH PAGES ── */
+  .auth-wrap {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    min-height: 600px;
+  }
+  .auth-left {
+    background: var(--brand-dark);
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    position: relative;
+    overflow: hidden;
+  }
+  .auth-left::before {
+    content: '';
+    position: absolute;
+    width: 300px; height: 300px;
+    border-radius: 50%;
+    background: rgba(45,158,110,0.2);
+    top: -80px; right: -80px;
+  }
+  .auth-left::after {
+    content: '';
+    position: absolute;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    background: rgba(240,165,0,0.1);
+    bottom: 40px; left: -60px;
+  }
+  .brand-logo {
+    font-family: var(--font-head);
+    font-size: 20px;
+    font-weight: 800;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .brand-logo .dot { color: var(--accent); }
+  .auth-tagline {
+    position: relative;
+    z-index: 1;
+  }
+  .auth-tagline h2 {
+    font-family: var(--font-head);
+    font-size: 28px;
+    font-weight: 700;
+    color: #fff;
+    line-height: 1.3;
+    margin-bottom: 1rem;
+  }
+  .auth-tagline p {
+    font-size: 14px;
+    color: rgba(255,255,255,0.55);
+    line-height: 1.7;
+  }
+  .skill-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    position: relative;
+    z-index: 1;
+  }
+  .chip {
+    padding: 6px 12px;
+    border-radius: 100px;
+    border: 1px solid rgba(255,255,255,0.15);
+    font-size: 12px;
+    color: rgba(255,255,255,0.7);
+    font-family: var(--font-body);
+  }
+  .chip.hot { border-color: rgba(240,165,0,0.4); color: var(--accent); }
+
+  .auth-right {
+    background: var(--surface);
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+  .auth-right h1 {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .auth-right .sub {
+    font-size: 13px;
+    color: var(--text2);
+    margin-bottom: 2rem;
+  }
+  .auth-right .sub a, .link-btn {
+    color: var(--brand);
+    cursor: pointer;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .form-group { margin-bottom: 1rem; }
+  .form-group label {
+    display: block;
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text2);
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .form-group input, .form-group select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm);
+    background: var(--surface2);
+    color: var(--text1);
+    font-family: var(--font-body);
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus { border-color: var(--brand); }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .btn-primary {
+    width: 100%;
+    padding: 11px;
+    background: var(--brand);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    margin-top: 0.5rem;
+  }
+  .btn-primary:hover { background: var(--brand-mid); }
+  .divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 1.25rem 0;
+    font-size: 12px;
+    color: var(--text3);
+  }
+  .divider::before, .divider::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+  .terms {
+    font-size: 11px;
+    color: var(--text3);
+    text-align: center;
+    margin-top: 1rem;
+    line-height: 1.6;
+  }
+  .error-msg {
+    font-size: 12px;
+    color: var(--color-text-danger);
+    margin-top: 6px;
+    display: none;
+  }
+
+  /* ── DASHBOARD ── */
+  .dash-layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: 600px;
+  }
+  .sidebar {
+    background: var(--brand-dark);
+    padding: 1.5rem 1rem;
+    display: flex;
+    flex-direction: column;
+  }
+  .sidebar .brand-logo { margin-bottom: 2rem; padding: 0 0.5rem; }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: rgba(255,255,255,0.6);
+    cursor: pointer;
+    transition: all 0.15s;
+    margin-bottom: 2px;
+    font-family: var(--font-body);
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.9); }
+  .nav-item.active { background: rgba(45,158,110,0.3); color: #fff; }
+  .nav-item i { font-size: 18px; width: 20px; }
+  .nav-spacer { flex: 1; }
+  .logout-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 14px;
+    color: rgba(255,100,100,0.7);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-body);
+  }
+  .logout-btn:hover { background: rgba(255,80,80,0.1); color: rgba(255,100,100,1); }
+  .logout-btn i { font-size: 18px; }
+
+  .main-content {
+    background: var(--surface3);
+    overflow-y: auto;
+    max-height: 600px;
+  }
+  .top-bar {
+    background: var(--surface);
+    border-bottom: 0.5px solid var(--border);
+    padding: 1rem 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .top-bar h1 {
+    font-family: var(--font-head);
+    font-size: 18px;
+    font-weight: 700;
+  }
+  .top-bar-right { display: flex; align-items: center; gap: 12px; }
+  .avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 600; color: #fff;
+    cursor: pointer;
+  }
+  .notif-btn {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    color: var(--text2);
+    position: relative;
+  }
+  .badge {
+    position: absolute;
+    top: -2px; right: -2px;
+    width: 14px; height: 14px;
+    background: var(--accent);
+    border-radius: 50%;
+    font-size: 9px;
+    display: flex; align-items: center; justify-content: center;
+    color: #000;
+    font-weight: 600;
+  }
+  .tab-content { display: none; padding: 1.5rem; }
+  .tab-content.active { display: block; }
+
+  /* HOME tab */
+  .stats-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 1.5rem; }
+  .stat-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .stat-card .label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px; }
+  .stat-card .value { font-family: var(--font-head); font-size: 28px; font-weight: 700; }
+  .stat-card .change { font-size: 12px; color: var(--color-text-success); margin-top: 4px; }
+  .section-title {
+    font-family: var(--font-head);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .section-title a { font-family: var(--font-body); font-size: 12px; font-weight: 400; color: var(--brand); cursor: pointer; }
+  .skill-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 1.5rem; }
+  .skill-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem;
+  }
+  .skill-card-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .skill-icon {
+    width: 38px; height: 38px;
+    border-radius: var(--radius-sm);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 18px;
+  }
+  .skill-icon.green { background: #e6f5ef; color: var(--brand); }
+  .skill-icon.amber { background: #fff8e6; color: #c87400; }
+  .skill-icon.blue { background: #e6f1fb; color: #185fa5; }
+  .skill-icon.purple { background: #eeedfe; color: #534ab7; }
+  .skill-card h3 { font-family: var(--font-head); font-size: 14px; font-weight: 600; }
+  .skill-card .by { font-size: 12px; color: var(--text2); }
+  .skill-card .tags { display: flex; gap: 6px; margin-top: 8px; }
+  .tag {
+    font-size: 11px;
+    padding: 3px 8px;
+    border-radius: 100px;
+    background: var(--surface2);
+    border: 0.5px solid var(--border);
+    color: var(--text2);
+  }
+  .tag.green { background: #e6f5ef; color: #0d3d2a; border-color: #9FE1CB; }
+  .activity-list { display: flex; flex-direction: column; gap: 8px; }
+  .activity-item {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 0.75rem 1rem;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 13px;
+  }
+  .activity-item i { font-size: 16px; color: var(--brand); }
+  .activity-item .time { margin-left: auto; color: var(--text3); font-size: 11px; }
+
+  /* MATCHES tab */
+  .match-cards { display: flex; flex-direction: column; gap: 12px; }
+  .match-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .match-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 16px; font-weight: 600; color: #fff;
+    flex-shrink: 0;
+  }
+  .match-info { flex: 1; }
+  .match-info h3 { font-family: var(--font-head); font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+  .match-info p { font-size: 12px; color: var(--text2); }
+  .match-exchange { font-size: 12px; margin-top: 6px; color: var(--text2); }
+  .match-exchange strong { color: var(--text1); }
+  .match-pct {
+    font-family: var(--font-head);
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--brand);
+    text-align: center;
+    flex-shrink: 0;
+  }
+  .match-pct span { display: block; font-family: var(--font-body); font-size: 10px; color: var(--text3); font-weight: 400; }
+  .btn-sm {
+    padding: 7px 14px;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    font-weight: 500;
+    border: 0.5px solid var(--border2);
+    background: var(--surface2);
+    cursor: pointer;
+    font-family: var(--font-body);
+    color: var(--text1);
+    transition: all 0.15s;
+  }
+  .btn-sm:hover { background: var(--surface3); }
+  .btn-sm.primary { background: var(--brand); color: #fff; border-color: var(--brand); }
+  .btn-sm.primary:hover { background: var(--brand-mid); }
+
+  /* PROFILE tab */
+  .profile-header {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .profile-av {
+    width: 64px; height: 64px;
+    border-radius: 50%;
+    background: var(--brand);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; font-weight: 700; color: #fff;
+    flex-shrink: 0;
+  }
+  .profile-info h2 { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+  .profile-info p { font-size: 13px; color: var(--text2); margin-bottom: 10px; }
+  .profile-skills-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .skills-section {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+  }
+  .skills-section h3 { font-family: var(--font-head); font-size: 13px; font-weight: 600; margin-bottom: 10px; color: var(--text2); text-transform: uppercase; letter-spacing: 0.05em; }
+  .skill-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 10px;
+    border-radius: 100px;
+    font-size: 12px;
+    margin: 3px 3px 3px 0;
+    border: 0.5px solid var(--border);
+    background: var(--surface2);
+    color: var(--text1);
+  }
+  .skill-pill i { font-size: 13px; color: var(--brand); }
+
+  /* SETTINGS tab */
+  .settings-sections { display: flex; flex-direction: column; gap: 1rem; }
+  .settings-card {
+    background: var(--surface);
+    border: 0.5px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .settings-card-title {
+    padding: 1rem 1.25rem;
+    font-family: var(--font-head);
+    font-size: 14px;
+    font-weight: 600;
+    border-bottom: 0.5px solid var(--border);
+    background: var(--surface2);
+  }
+  .settings-row {
+    padding: 0.875rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .settings-row:last-child { border-bottom: none; }
+  .settings-row-label { font-size: 14px; }
+  .settings-row-label p { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .toggle {
+    width: 40px; height: 22px;
+    border-radius: 100px;
+    background: var(--brand);
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 16px; height: 16px;
+    background: #fff;
+    border-radius: 50%;
+    top: 3px; right: 3px;
+    transition: right 0.2s;
+  }
+  .toggle.off { background: var(--border2); }
+  .toggle.off::after { right: auto; left: 3px; }
+  .danger-zone {
+    background: var(--surface);
+    border: 0.5px solid rgba(220,50,50,0.3);
+    border-radius: var(--radius);
+    padding: 1.25rem;
+  }
+  .danger-zone h3 { font-family: var(--font-head); font-size: 14px; font-weight: 600; color: var(--color-text-danger); margin-bottom: 8px; }
+  .danger-zone p { font-size: 13px; color: var(--text2); margin-bottom: 12px; }
+  .btn-danger {
+    padding: 8px 16px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    font-weight: 500;
+    border: 0.5px solid rgba(220,50,50,0.4);
+    background: transparent;
+    color: var(--color-text-danger);
+    cursor: pointer;
+    font-family: var(--font-body);
+    transition: all 0.15s;
+  }
+  .btn-danger:hover { background: rgba(220,50,50,0.08); }
+
+  /* logout confirm */
+  .modal-overlay {
+    display: none;
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+    border-radius: var(--radius);
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: var(--surface);
+    border-radius: var(--radius);
+    padding: 2rem;
+    max-width: 320px;
+    width: 90%;
+    text-align: center;
+    border: 0.5px solid var(--border2);
+  }
+  .modal-icon { font-size: 36px; color: var(--color-text-danger); margin-bottom: 1rem; }
+  .modal-box h2 { font-family: var(--font-head); font-size: 18px; font-weight: 700; margin-bottom: 8px; }
+  .modal-box p { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; line-height: 1.6; }
+  .modal-btns { display: flex; gap: 10px; }
+  .modal-btns button { flex: 1; padding: 10px; border-radius: var(--radius-sm); font-family: var(--font-body); font-size: 14px; font-weight: 500; cursor: pointer; border: 0.5px solid var(--border2); background: var(--surface2); color: var(--text1); }
+  .modal-btns button.confirm { background: var(--color-background-danger); color: var(--color-text-danger); border-color: rgba(220,50,50,0.3); }
+
+  .toast {
+    position: absolute;
+    bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: var(--brand-dark);
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 100px;
+    font-size: 13px;
+    opacity: 0;
+    transition: opacity 0.3s;
+    z-index: 200;
+    white-space: nowrap;
+  }
+  .toast.show { opacity: 1; }
+</style>
+
+<h2 class="sr-only">Skill Exchange — register, login, and dashboard with home, profile, matches, and settings tabs</h2>
+
+<div id="app">
+
+  <!-- REGISTER PAGE -->
+  <div id="page-register" class="page active">
+    <div class="auth-wrap">
+      <div class="auth-left">
+        <div class="brand-logo"><i class="ti ti-exchange" aria-hidden="true"></i> SkillSwap<span class="dot">.</span></div>
+        <div class="auth-tagline">
+          <h2>Trade skills,<br>grow together.</h2>
+          <p>Connect with people who have what you need — and share what you know.</p>
+        </div>
+        <div class="skill-chips">
+          <span class="chip">Web design</span>
+          <span class="chip hot">Python</span>
+          <span class="chip">Photography</span>
+          <span class="chip">Video editing</span>
+          <span class="chip hot">UI/UX</span>
+          <span class="chip">Marketing</span>
+          <span class="chip">Copywriting</span>
+        </div>
+      </div>
+      <div class="auth-right">
+        <h1>Create your account</h1>
+        <p class="sub">Already have one? <span class="link-btn" onclick="showPage('login')">Sign in</span></p>
+        <div class="form-row">
+          <div class="form-group">
+            <label>First name</label>
+            <input type="text" id="reg-fname" placeholder="Alex" />
+          </div>
+          <div class="form-group">
+            <label>Last name</label>
+            <input type="text" id="reg-lname" placeholder="Johnson" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="reg-email" placeholder="alex@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Primary skill you offer</label>
+          <select id="reg-skill">
+            <option value="">Select a skill…</option>
+            <option>Web Development</option>
+            <option>Graphic Design</option>
+            <option>Photography</option>
+            <option>Video Editing</option>
+            <option>Writing & Copywriting</option>
+            <option>Data Science</option>
+            <option>Marketing</option>
+            <option>Music Production</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="reg-pass" placeholder="At least 8 characters" />
+          <div class="error-msg" id="reg-error">Please fill in all fields.</div>
+        </div>
+        <button class="btn-primary" onclick="doRegister()">Create account <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        <p class="terms">By registering you agree to our <span class="link-btn">Terms of Service</span> and <span class="link-btn">Privacy Policy</span>.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGIN PAGE -->
+  <div id="page-login" class="page">
+    <div class="auth-wrap">
+      <div class="auth-left">
+        <div class="brand-logo"><i class="ti ti-exchange" aria-hidden="true"></i> SkillSwap<span class="dot">.</span></div>
+        <div class="auth-tagline">
+          <h2>Welcome back,<br>skill trader.</h2>
+          <p>Your next exchange is just one login away. Let's continue growing.</p>
+        </div>
+        <div class="skill-chips">
+          <span class="chip">12,400+ members</span>
+          <span class="chip hot">340 active swaps</span>
+          <span class="chip">Free forever</span>
+        </div>
+      </div>
+      <div class="auth-right">
+        <h1>Sign in</h1>
+        <p class="sub">New to SkillSwap? <span class="link-btn" onclick="showPage('register')">Create an account</span></p>
+        <div class="form-group">
+          <label>Email address</label>
+          <input type="email" id="login-email" placeholder="alex@example.com" />
+        </div>
+        <div class="form-group">
+          <label>Password</label>
+          <input type="password" id="login-pass" placeholder="Your password" />
+          <div class="error-msg" id="login-error">Invalid email or password.</div>
+        </div>
+        <div style="text-align:right; margin-bottom:1rem;">
+          <span class="link-btn" style="font-size:13px;">Forgot password?</span>
+        </div>
+        <button class="btn-primary" onclick="doLogin()">Sign in <i class="ti ti-arrow-right" aria-hidden="true"></i></button>
+        <div class="divider">or continue with</div>
+        <button onclick="doLogin()" style="width:100%;padding:10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text1);font-family:var(--font-body);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;">
+          <i class="ti ti-brand-google" aria-hidden="true"></i> Google
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD PAGE -->
+  <div id="page-dashboard" class="page">
+    <div class="dash-layout">
+      <div class="sidebar">
+        <div class="brand-logo"><i class="ti ti-exchange" aria-hidden="true"></i> SkillSwap<span class="dot">.</span></div>
+        <div class="nav-item active" onclick="switchTab('home')" id="nav-home">
+          <i class="ti ti-home" aria-hidden="true"></i> Home
+        </div>
+        <div class="nav-item" onclick="switchTab('matches')" id="nav-matches">
+          <i class="ti ti-arrows-exchange" aria-hidden="true"></i> Matches
+          <span style="margin-left:auto;background:var(--accent);color:#000;font-size:10px;padding:2px 6px;border-radius:100px;font-weight:600;">3</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('profile')" id="nav-profile">
+          <i class="ti ti-user" aria-hidden="true"></i> Profile
+        </div>
+        <div class="nav-item" onclick="switchTab('settings')" id="nav-settings">
+          <i class="ti ti-settings" aria-hidden="true"></i> Settings
+        </div>
+        <div class="nav-spacer"></div>
+        <div class="logout-btn" onclick="showLogout()">
+          <i class="ti ti-logout" aria-hidden="true"></i> Log out
+        </div>
+      </div>
+
+      <div class="main-content">
+        <!-- TOP BAR -->
+        <div class="top-bar">
+          <h1 id="tab-title">Home</h1>
+          <div class="top-bar-right">
+            <div class="notif-btn"><i class="ti ti-bell" style="font-size:16px" aria-hidden="true"></i><span class="badge">3</span></div>
+            <div class="avatar" onclick="switchTab('profile')">AJ</div>
+          </div>
+        </div>
+
+        <!-- HOME TAB -->
+        <div class="tab-content active" id="tab-home">
+          <div style="margin-bottom:1.25rem;">
+            <p style="font-size:22px;font-family:var(--font-head);font-weight:700;">Good afternoon, Alex 👋</p>
+            <p style="font-size:13px;color:var(--text2);margin-top:4px;">You have 3 new match requests waiting.</p>
+          </div>
+          <div class="stats-row">
+            <div class="stat-card">
+              <div class="label">Active swaps</div>
+              <div class="value">4</div>
+              <div class="change"><i class="ti ti-arrow-up-right" aria-hidden="true"></i> 2 this week</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Skills offered</div>
+              <div class="value">3</div>
+              <div class="change" style="color:var(--text3);">Web Dev · Design · SEO</div>
+            </div>
+            <div class="stat-card">
+              <div class="label">Match score</div>
+              <div class="value">94%</div>
+              <div class="change"><i class="ti ti-arrow-up-right" aria-hidden="true"></i> Top 5%</div>
+            </div>
+          </div>
+          <div class="section-title">Recommended skill exchanges <a>View all →</a></div>
+          <div class="skill-cards">
+            <div class="skill-card">
+              <div class="skill-card-head">
+                <div class="skill-icon green"><i class="ti ti-code" aria-hidden="true"></i></div>
+                <div><div class="skill-card" style="border:none;padding:0;background:none"><h3>React Development</h3></div><div class="by">Priya M. • Chennai</div></div>
+              </div>
+              <p style="font-size:12px;color:var(--text2);line-height:1.6;">Wants: Graphic Design</p>
+              <div class="tags"><span class="tag green">97% match</span><span class="tag">Remote</span></div>
+            </div>
+            <div class="skill-card">
+              <div class="skill-card-head">
+                <div class="skill-icon amber"><i class="ti ti-camera" aria-hidden="true"></i></div>
+                <div><div class="skill-card" style="border:none;padding:0;background:none"><h3>Photography</h3></div><div class="by">Rajan K. • Bangalore</div></div>
+              </div>
+              <p style="font-size:12px;color:var(--text2);line-height:1.6;">Wants: Web Development</p>
+              <div class="tags"><span class="tag green">91% match</span><span class="tag">Hybrid</span></div>
+            </div>
+            <div class="skill-card">
+              <div class="skill-card-head">
+                <div class="skill-icon blue"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+                <div><div class="skill-card" style="border:none;padding:0;background:none"><h3>Data Analytics</h3></div><div class="by">Sunita R. • Mumbai</div></div>
+              </div>
+              <p style="font-size:12px;color:var(--text2);line-height:1.6;">Wants: UI/UX Design</p>
+              <div class="tags"><span class="tag green">88% match</span><span class="tag">Remote</span></div>
+            </div>
+            <div class="skill-card">
+              <div class="skill-card-head">
+                <div class="skill-icon purple"><i class="ti ti-writing" aria-hidden="true"></i></div>
+                <div><div class="skill-card" style="border:none;padding:0;background:none"><h3>Copywriting</h3></div><div class="by">Arjun T. • Hyderabad</div></div>
+              </div>
+              <p style="font-size:12px;color:var(--text2);line-height:1.6;">Wants: Video Editing</p>
+              <div class="tags"><span class="tag green">85% match</span><span class="tag">Remote</span></div>
+            </div>
+          </div>
+          <div class="section-title">Recent activity</div>
+          <div class="activity-list">
+            <div class="activity-item"><i class="ti ti-check-circle" aria-hidden="true"></i><span>Swap with <strong>Priya M.</strong> confirmed</span><span class="time">2h ago</span></div>
+            <div class="activity-item"><i class="ti ti-message" aria-hidden="true"></i><span>New message from <strong>Rajan K.</strong></span><span class="time">5h ago</span></div>
+            <div class="activity-item"><i class="ti ti-star" aria-hidden="true"></i><span>You received a 5-star review</span><span class="time">Yesterday</span></div>
+          </div>
+        </div>
+
+        <!-- MATCHES TAB -->
+        <div class="tab-content" id="tab-matches">
+          <div style="margin-bottom:1.25rem;">
+            <p style="font-size:14px;color:var(--text2);">3 people want to exchange skills with you</p>
+          </div>
+          <div class="match-cards">
+            <div class="match-card">
+              <div class="match-avatar" style="background:#1a6b4a;">PM</div>
+              <div class="match-info">
+                <h3>Priya Mehra</h3>
+                <p>Senior React Developer • Chennai</p>
+                <div class="match-exchange">Offers: <strong>React Development</strong> · Wants: <strong>Graphic Design</strong></div>
+              </div>
+              <div class="match-pct">97%<span>match</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <button class="btn-sm primary" onclick="showToast('Match accepted!')">Accept</button>
+                <button class="btn-sm" onclick="showToast('Request declined')">Decline</button>
+              </div>
+            </div>
+            <div class="match-card">
+              <div class="match-avatar" style="background:#c87400;">RK</div>
+              <div class="match-info">
+                <h3>Rajan Kumar</h3>
+                <p>Freelance Photographer • Bangalore</p>
+                <div class="match-exchange">Offers: <strong>Photography</strong> · Wants: <strong>Web Development</strong></div>
+              </div>
+              <div class="match-pct">91%<span>match</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <button class="btn-sm primary" onclick="showToast('Match accepted!')">Accept</button>
+                <button class="btn-sm" onclick="showToast('Request declined')">Decline</button>
+              </div>
+            </div>
+            <div class="match-card">
+              <div class="match-avatar" style="background:#185fa5;">SR</div>
+              <div class="match-info">
+                <h3>Sunita Rao</h3>
+                <p>Data Analyst • Mumbai</p>
+                <div class="match-exchange">Offers: <strong>Data Analytics</strong> · Wants: <strong>UI/UX Design</strong></div>
+              </div>
+              <div class="match-pct">88%<span>match</span></div>
+              <div style="display:flex;flex-direction:column;gap:6px;">
+                <button class="btn-sm primary" onclick="showToast('Match accepted!')">Accept</button>
+                <button class="btn-sm" onclick="showToast('Request declined')">Decline</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PROFILE TAB -->
+        <div class="tab-content" id="tab-profile">
+          <div class="profile-header">
+            <div class="profile-av">AJ</div>
+            <div class="profile-info">
+              <h2 id="profile-name">Alex Johnson</h2>
+              <p id="profile-email">alex@example.com</p>
+              <div class="tags">
+                <span class="tag green"><i class="ti ti-star" style="font-size:11px" aria-hidden="true"></i> 4.9 rating</span>
+                <span class="tag">12 exchanges</span>
+                <span class="tag">Member since 2024</span>
+              </div>
+            </div>
+            <button class="btn-sm" style="margin-left:auto;" onclick="showToast('Edit mode coming soon')"><i class="ti ti-edit" aria-hidden="true"></i> Edit profile</button>
+          </div>
+          <div class="profile-skills-grid">
+            <div class="skills-section">
+              <h3>Skills I offer</h3>
+              <span class="skill-pill"><i class="ti ti-code" aria-hidden="true"></i> Web Development</span>
+              <span class="skill-pill"><i class="ti ti-palette" aria-hidden="true"></i> Graphic Design</span>
+              <span class="skill-pill"><i class="ti ti-brand-google" aria-hidden="true"></i> SEO</span>
+            </div>
+            <div class="skills-section">
+              <h3>Skills I want</h3>
+              <span class="skill-pill"><i class="ti ti-camera" aria-hidden="true"></i> Photography</span>
+              <span class="skill-pill"><i class="ti ti-chart-bar" aria-hidden="true"></i> Data Science</span>
+              <span class="skill-pill"><i class="ti ti-video" aria-hidden="true"></i> Video Editing</span>
+            </div>
+          </div>
+          <div style="margin-top:1rem;">
+            <div class="skills-section">
+              <h3>About me</h3>
+              <p style="font-size:14px;color:var(--text2);line-height:1.7;margin-top:6px;">Fullstack developer and designer based in Chennai. I love building clean interfaces and helping others learn web skills. Looking to grow my visual storytelling abilities through skill exchange.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- SETTINGS TAB -->
+        <div class="tab-content" id="tab-settings">
+          <div class="settings-sections">
+            <div class="settings-card">
+              <div class="settings-card-title">Account</div>
+              <div class="settings-row">
+                <div class="settings-row-label">Email address<p>alex@example.com</p></div>
+                <button class="btn-sm" onclick="showToast('Change email coming soon')">Change</button>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Password<p>Last changed 3 months ago</p></div>
+                <button class="btn-sm" onclick="showToast('Change password coming soon')">Update</button>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Profile visibility<p>Anyone can find your profile</p></div>
+                <div class="toggle" onclick="this.classList.toggle('off')" title="Toggle visibility"></div>
+              </div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-title">Notifications</div>
+              <div class="settings-row">
+                <div class="settings-row-label">New match requests<p>Get notified when someone wants to swap</p></div>
+                <div class="toggle" onclick="this.classList.toggle('off')" title="Toggle"></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Messages<p>Email me when I receive a message</p></div>
+                <div class="toggle" onclick="this.classList.toggle('off')" title="Toggle"></div>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Weekly digest<p>Summary of new skill offerings</p></div>
+                <div class="toggle off" onclick="this.classList.toggle('off')" title="Toggle"></div>
+              </div>
+            </div>
+            <div class="settings-card">
+              <div class="settings-card-title">Preferences</div>
+              <div class="settings-row">
+                <div class="settings-row-label">Location</div>
+                <select style="width:auto;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text1);font-family:var(--font-body);font-size:13px;">
+                  <option>Chennai, India</option>
+                  <option>Remote only</option>
+                  <option>Worldwide</option>
+                </select>
+              </div>
+              <div class="settings-row">
+                <div class="settings-row-label">Exchange mode</div>
+                <select style="width:auto;padding:6px 10px;border:0.5px solid var(--border2);border-radius:var(--radius-sm);background:var(--surface2);color:var(--text1);font-family:var(--font-body);font-size:13px;">
+                  <option>Online & In-person</option>
+                  <option>Online only</option>
+                  <option>In-person only</option>
+                </select>
+              </div>
+            </div>
+            <div class="danger-zone">
+              <h3>Danger zone</h3>
+              <p>Permanently delete your account and all your data. This cannot be undone.</p>
+              <button class="btn-danger" onclick="showToast('Please contact support to delete account')">Delete account</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOGOUT MODAL -->
+  <div class="modal-overlay" id="logout-modal">
+    <div class="modal-box">
+      <div class="modal-icon"><i class="ti ti-logout" aria-hidden="true"></i></div>
+      <h2>Log out?</h2>
+      <p>You'll need to sign in again to access your skill exchange dashboard.</p>
+      <div class="modal-btns">
+        <button onclick="hideLogout()">Cancel</button>
+        <button class="confirm" onclick="doLogout()">Log out</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+  let currentUser = { name: 'Alex Johnson', email: 'alex@example.com' };
+
+  function showPage(p) {
+    document.querySelectorAll('.page').forEach(el => el.classList.remove('active'));
+    document.getElementById('page-' + p).classList.add('active');
+  }
+
+  function doRegister() {
+    const fn = document.getElementById('reg-fname').value.trim();
+    const ln = document.getElementById('reg-lname').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const skill = document.getElementById('reg-skill').value;
+    const pass = document.getElementById('reg-pass').value;
+    const err = document.getElementById('reg-error');
+    if (!fn || !ln || !email || !skill || !pass) {
+      err.style.display = 'block'; return;
+    }
+    err.style.display = 'none';
+    currentUser = { name: fn + ' ' + ln, email };
+    document.getElementById('profile-name').textContent = currentUser.name;
+    document.getElementById('profile-email').textContent = currentUser.email;
+    document.querySelector('.avatar').textContent = (fn[0] + ln[0]).toUpperCase();
+    document.querySelector('.profile-av').textContent = (fn[0] + ln[0]).toUpperCase();
+    showPage('dashboard');
+    showToast('Welcome to SkillSwap, ' + fn + '!');
+  }
+
+  function doLogin() {
+    const email = document.getElementById('login-email').value.trim();
+    const pass = document.getElementById('login-pass').value;
+    const err = document.getElementById('login-error');
+    if (!email || !pass) { err.style.display = 'block'; return; }
+    err.style.display = 'none';
+    showPage('dashboard');
+    showToast('Welcome back!');
+  }
+
+  function switchTab(tab) {
+    document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+    document.getElementById('nav-' + tab).classList.add('active');
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    const titles = { home: 'Home', matches: 'Matches', profile: 'Profile', settings: 'Settings' };
+    document.getElementById('tab-title').textContent = titles[tab];
+  }
+
+  function showLogout() { document.getElementById('logout-modal').classList.add('show'); }
+  function hideLogout() { document.getElementById('logout-modal').classList.remove('show'); }
+  function doLogout() { hideLogout(); showPage('login'); showToast('You have been logged out.'); }
+
+  let toastTimer;
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>

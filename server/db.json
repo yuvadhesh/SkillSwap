@@ -1,0 +1,304 @@
+{
+  "users": [
+    {
+      "name": "Alex Johnson",
+      "email": "alex@example.com",
+      "initials": "AJ",
+      "skillOffer": "Web Development",
+      "skillWant": "Graphic Design",
+      "password": "password123",
+      "bio": "Fullstack developer and designer based in Chennai. I love building clean interfaces and helping others learn web skills. Looking to grow my visual storytelling abilities.",
+      "rating": 4.9,
+      "exchanges": 12,
+      "memberSince": 2024
+    },
+    {
+      "name": "Priya Mehra",
+      "email": "priya@example.com",
+      "initials": "PM",
+      "skillOffer": "React Development",
+      "skillWant": "Graphic Design",
+      "password": "password123",
+      "bio": "Senior React Developer based in Chennai. Looking to exchange React tips for vector illustration and layout design.",
+      "rating": 4.8,
+      "exchanges": 8,
+      "memberSince": 2024
+    },
+    {
+      "name": "Rajan Kumar",
+      "email": "rajan@example.com",
+      "initials": "RK",
+      "skillOffer": "Photography",
+      "skillWant": "Web Development",
+      "password": "password123",
+      "bio": "Freelance Photographer based in Bangalore. Can teach DSLR settings, composition, and video styling in exchange for web building skills.",
+      "rating": 4.7,
+      "exchanges": 6,
+      "memberSince": 2025
+    },
+    {
+      "name": "Sunita Rao",
+      "email": "sunita@example.com",
+      "initials": "SR",
+      "skillOffer": "Data Science",
+      "skillWant": "UI/UX Design",
+      "password": "password123",
+      "bio": "Data Analyst in Mumbai. Happy to teach SQL, data charts, and Excel dashboard building in exchange for Figma UI/UX training.",
+      "rating": 4.9,
+      "exchanges": 15,
+      "memberSince": 2023
+    },
+    {
+      "name": "Arjun Tomar",
+      "email": "arjun@example.com",
+      "initials": "AT",
+      "skillOffer": "Graphic Design",
+      "skillWant": "Full Stack Development",
+      "password": "password123",
+      "bio": "Brand identity designer in Hyderabad. Ready to help with logos, flyers, and branding assets in exchange for React or Node tutorials.",
+      "rating": 4.6,
+      "exchanges": 9,
+      "memberSince": 2024
+    },
+    {
+      "name": "Yuvadhesh M",
+      "email": "yuva1@gmail.com",
+      "skillOffer": "Frontend Development",
+      "skillWant": "Data Science",
+      "password": "123456",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in Frontend Development and learning Data Science.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Yuvadhesh M",
+      "email": "yuva5@gmail.com",
+      "skillOffer": "UI/UX Design",
+      "skillWant": "Game Development",
+      "password": "123456",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in UI/UX Design and learning Game Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Yuvadhesh M",
+      "email": "yuva@gmail.com",
+      "skillOffer": "UI/UX Design",
+      "skillWant": "Business Intelligence (BI)",
+      "password": "123456",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in UI/UX Design and learning Business Intelligence (BI).",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Yuvadhesh M",
+      "email": "yuva6@gmail.com",
+      "skillOffer": "Data Engineering",
+      "skillWant": "Game Development",
+      "password": "123456",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in Data Engineering and learning Game Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Yuvadhesh M",
+      "email": "yuva7@gmail.com",
+      "skillOffer": "Embedded Systems / IoT",
+      "skillWant": "Game Development",
+      "password": "123456",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in Embedded Systems / IoT and learning Game Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "maran M",
+      "email": "maran@gmail.com",
+      "skillOffer": "Cybersecurity",
+      "skillWant": "Game Development",
+      "password": "123456",
+      "initials": "MM",
+      "bio": "Passionate about sharing my knowledge in Cybersecurity and learning Game Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Alex A",
+      "email": "alex@gmail.com",
+      "skillOffer": "Game Development",
+      "skillWant": "Cybersecurity",
+      "password": "123456",
+      "initials": "AA",
+      "bio": "Passionate about sharing my knowledge in Game Development and learning Cybersecurity.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "leo m",
+      "email": "leo@gmail.com",
+      "skillOffer": "Game Development",
+      "skillWant": "UI/UX Design",
+      "password": "123456",
+      "initials": "LM",
+      "bio": "Passionate about sharing my knowledge in Game Development and learning UI/UX Design.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "vishal m",
+      "email": "vishal@gmail.com",
+      "skillOffer": "Backend Development",
+      "skillWant": "React Development",
+      "password": "123456",
+      "initials": "VM",
+      "bio": "Passionate about sharing my knowledge in UI/UX Design and learning Game Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Test User",
+      "email": "testuser@example.com",
+      "skillOffer": "Backend Development",
+      "skillWant": "Web Development",
+      "password": "password123",
+      "initials": "TU",
+      "bio": "Passionate about sharing my knowledge in Full Stack Development and learning UI/UX Design.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "yuva yuva",
+      "email": "yuva8@gmail.com",
+      "skillOffer": "Web Development",
+      "skillWant": "Backend Development",
+      "password": "Yuva@123",
+      "initials": "YY",
+      "bio": "Passionate about sharing my knowledge in Data Engineering and learning Blockchain Development.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "Yuva M",
+      "email": "yuvadhesh@gmail.com",
+      "skillOffer": "Artificial Intelligence & Machine Learning",
+      "skillWant": "Java + DSA + SQL",
+      "password": "Yuva@123",
+      "initials": "YM",
+      "bio": "Passionate about sharing my knowledge in Artificial Intelligence & Machine Learning and learning Java + DSA + SQL.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    },
+    {
+      "name": "shashwin R",
+      "email": "shashwin@gmail.com",
+      "skillOffer": "Java + DSA + SQL",
+      "skillWant": "Artificial Intelligence & Machine Learning",
+      "password": "shashwin123",
+      "initials": "SR",
+      "bio": "Passionate about sharing my knowledge in Java + DSA + SQL and learning Artificial Intelligence & Machine Learning.",
+      "rating": 5,
+      "exchanges": 0,
+      "memberSince": 2026
+    }
+  ],
+  "chatSessions": {
+    "maran@gmail.com": [
+      {
+        "id": "session-1",
+        "title": "React Learning Roadmap",
+        "messages": [
+          {
+            "id": "msg-1",
+            "sender": "user",
+            "text": "Hey! I want to swap my Cybersecurity skills to learn Game Development. How should I start?",
+            "timestamp": "2026-06-06T05:43:29.433Z"
+          },
+          {
+            "id": "msg-2",
+            "sender": "bot",
+            "text": "Hello maran M! That is a fantastic skill trade combination. I recommend starting with a structured 4-week project. Let me write a custom learning roadmap for you based on Game Development...",
+            "timestamp": "2026-06-06T05:43:30.433Z"
+          },
+          {
+            "id": "msg-1780731812549",
+            "sender": "user",
+            "text": "hi",
+            "timestamp": "2026-06-06T07:43:32.549Z"
+          },
+          {
+            "id": "msg-1780731813572",
+            "sender": "bot",
+            "text": "Hello maran M! 👋 I am your **SkillSwap AI Assistant**. \n\nI can help you:\n- 🚀 Create customized learning roadmaps for **Game Development**\n- 📝 Draft personalized swap request messages to matches (like Priya M.)\n- 💡 Brainstorm collaborative project ideas\n- ⚙️ Optimize your profile bio for more matches\n\nWhat would you like to work on today? Select one of the quick suggestions below or type your question!",
+            "timestamp": "2026-06-06T07:43:33.572Z"
+          }
+        ]
+      }
+    ],
+    "vishal@gmail.com": [
+      {
+        "id": "session-1",
+        "title": "React Learning Roadmap",
+        "messages": [
+          {
+            "id": "msg-1",
+            "sender": "user",
+            "text": "Hey! I want to swap my UI/UX Design skills to learn Game Development. How should I start?",
+            "timestamp": "2026-06-11T15:32:18.944Z"
+          },
+          {
+            "id": "msg-2",
+            "sender": "bot",
+            "text": "Hello vishal m! That is a fantastic skill trade combination. I recommend starting with a structured 4-week project. Let me write a custom learning roadmap for you based on Game Development...",
+            "timestamp": "2026-06-11T15:32:19.944Z"
+          },
+          {
+            "id": "msg-1781199141354",
+            "sender": "user",
+            "text": "hi",
+            "timestamp": "2026-06-11T17:32:21.354Z"
+          },
+          {
+            "id": "msg-1781199142374",
+            "sender": "bot",
+            "text": "Hello vishal m! 👋 I am your **SkillSwap AI Assistant**. \n\nI can help you:\n- 🚀 Create customized learning roadmaps for **Game Development**\n- 📝 Draft personalized swap request messages to matches (like Priya M.)\n- 💡 Brainstorm collaborative project ideas\n- ⚙️ Optimize your profile bio for more matches\n\nWhat would you like to work on today? Select one of the quick suggestions below or type your question!",
+            "timestamp": "2026-06-11T17:32:22.374Z"
+          }
+        ]
+      },
+      {
+        "id": "session-2",
+        "title": "Swap Message Draft",
+        "messages": [
+          {
+            "id": "msg-3",
+            "sender": "user",
+            "text": "Draft a skill swap message to Priya M.",
+            "timestamp": "2026-06-10T17:32:18.944Z"
+          },
+          {
+            "id": "msg-4",
+            "sender": "bot",
+            "text": "Sure! Here's a custom template you can copy and paste:\n\n```markdown\nHi Priya,\n\nI noticed you offer React Development and want Graphic Design. I specialize in Graphic Design and would love to exchange skills! Let me know if you want to connect.\n```\n\nHope this helps! Let me know if you'd like to adjust the tone.",
+            "timestamp": "2026-06-10T17:32:19.944Z"
+          }
+        ]
+      }
+    ]
+  }
+}
