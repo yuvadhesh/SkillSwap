@@ -8,7 +8,7 @@ import 'react-day-picker/dist/style.css';
 import { format } from 'date-fns';
 import AdminTab from './components/AdminTab';
 import { requestFirebaseToken, onMessageListener } from './firebase';
-import { JitsiMeeting } from '@jitsi/react-sdk';
+import VideoCall from './components/VideoCall';
 
 type Page = 'register' | 'login' | 'dashboard' | 'forgot-password' | 'reset-password';
 type Tab = 'home' | 'matches' | 'search' | 'requests' | 'bookings' | 'profile' | 'settings' | 'chatbot' | 'admin';
@@ -198,24 +198,11 @@ export default function App() {
             </button>
           </div>
           <div className="flex-1 bg-zinc-950 flex items-center justify-center relative">
-            <JitsiMeeting
-              domain="meet.jit.si"
+            <VideoCall
               roomName={activeVideoCall.roomName}
-              configOverwrite={{
-                startWithAudioMuted: true,
-                startWithVideoMuted: true,
-                prejoinPageEnabled: false,
-              }}
-              userInfo={{
-                displayName: user.name,
-                email: user.email
-
-              }}
-              getIFrameRef={(iframeRef) => {
-                iframeRef.style.height = '100%';
-                iframeRef.style.width = '100%';
-              }}
-              onReadyToClose={() => setActiveVideoCall(null)}
+              subject={activeVideoCall.subject}
+              partnerName={activeVideoCall.partnerName}
+              onLeave={() => setActiveVideoCall(null)}
             />
           </div>
         </div>
@@ -1258,6 +1245,7 @@ function RequestsTab({ user, requests, loading, fetchRequests, onAddActivity, on
 function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdate: (updated: UserData) => void; onAddActivity: (type: 'success' | 'message' | 'star', text: string) => void }) {
   const [isEditing, setIsEditing] = useState(false);
   const [showPhotoModal, setShowPhotoModal] = useState(false);
+  const [viewFullPhoto, setViewFullPhoto] = useState(false);
   const [name, setName] = useState(user.name);
   const [bio, setBio] = useState(user.bio || 'Fullstack developer and designer based in Chennai. I love building clean interfaces and helping others learn web skills. Looking to grow my visual storytelling abilities through skill exchange.');
   const [skillOffer, setSkillOffer] = useState(user.skillOffer || 'Web Development');
@@ -1415,7 +1403,13 @@ function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdat
               </button>
             </div>
             <div className="p-6 flex flex-col items-center">
-              <div className="w-40 h-40 rounded-full bg-[var(--brand)] flex items-center justify-center text-white text-5xl font-bold overflow-hidden shadow-lg mb-6">
+              <div 
+                className={`w-40 h-40 rounded-full bg-[var(--brand)] flex items-center justify-center text-white text-5xl font-bold overflow-hidden shadow-lg mb-6 ${user.profilePhoto ? 'cursor-pointer hover:opacity-90 transition' : ''}`}
+                onClick={() => {
+                  if (user.profilePhoto) setViewFullPhoto(true);
+                }}
+                title={user.profilePhoto ? "View Full Photo" : ""}
+              >
                 {user.profilePhoto ? <img src={`${API_URL}${user.profilePhoto}`} alt={user.name} className="w-full h-full object-cover" /> : user.initials}
               </div>
               
@@ -1480,6 +1474,24 @@ function ProfileTab({ user, onUpdate, onAddActivity }: { user: UserData; onUpdat
               }
             }} />
           </div>
+        </div>
+      )}
+
+      {/* Full Screen Photo Viewer */}
+      {viewFullPhoto && user.profilePhoto && (
+        <div className="fixed inset-0 bg-black/90 flex items-center justify-center z-[100] p-4 sm:p-10" onClick={() => setViewFullPhoto(false)}>
+          <button 
+            onClick={(e) => { e.stopPropagation(); setViewFullPhoto(false); }} 
+            className="absolute top-6 right-6 text-white/70 hover:text-white bg-white/10 hover:bg-white/20 p-2 rounded-full transition"
+          >
+            <span className="text-2xl leading-none">&times;</span>
+          </button>
+          <img 
+            src={`${API_URL}${user.profilePhoto}`} 
+            alt={user.name} 
+            className="max-w-full max-h-full object-contain rounded-md shadow-2xl animate-in zoom-in-95 duration-200" 
+            onClick={(e) => e.stopPropagation()}
+          />
         </div>
       )}
     </div>

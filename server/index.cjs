@@ -980,6 +980,64 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log('User disconnected from socket:', socket.id);
   });
+  // WebRTC signaling events
+  socket.on('join_call_room', ({ room }) => {
+    if (!room) return;
+    socket.join(room);
+    console.log(`Socket ${socket.id} joined call room: ${room}`);
+
+    // Determine if this client is the initiator (first in room)
+    const roomSockets = io.sockets.adapter.rooms.get(room);
+    const isInitiator = roomSockets ? roomSockets.size === 1 : true;
+
+    // Send ICE servers and initiator flag to joining client
+    const iceServers = (process.env.STUN_SERVERS?.split(',').map(url => ({ urls: url.trim() }))) ||
+      [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ];
+    socket.emit('ice_servers', iceServers);
+    socket.emit('room_joined', { isInitiator });
+
+    // Notify others in room that a new user joined
+    socket.to(room).emit('user_joined', { id: socket.id });
+  });
+
+  socket.on('call_offer', ({ room, sdp }) => {
+    if (!room) return;
+    socket.to(room).emit('call_offer', { sdp, sender: socket.id });
+    console.log(`Call offer sent to room ${room} from ${socket.id}`);
+  });
+
+  socket.on('call_answer', ({ room, sdp }) => {
+    if (!room) return;
+    socket.to(room).emit('call_answer', { sdp, sender: socket.id });
+    console.log(`Call answer sent to room ${room} from ${socket.id}`);
+  });
+
+  socket.on('ice_candidate', ({ room, candidate }) => {
+    if (!room) return;
+    socket.to(room).emit('ice_candidate', { candidate, sender: socket.id });
+    console.log(`ICE candidate sent to room ${room} from ${socket.id}`);
+  });
+
+  socket.on('call_chat', ({ room, text, time }) => {
+    if (!room) return;
+    socket.to(room).emit('call_chat', { text, time, sender: socket.id });
+  });
+
+  socket.on('hand_raise', ({ room, raised }) => {
+    if (!room) return;
+    socket.to(room).emit('hand_raise', { raised, sender: socket.id });
+  });
+
+  socket.on('leave_call', ({ room }) => {
+    if (!room) return;
+    socket.to(room).emit('user_left', { id: socket.id });
+    socket.leave(room);
+    console.log(`Socket ${socket.id} left call room: ${room}`);
+  });
+
 });
 
 // Start Server
