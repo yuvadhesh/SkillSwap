@@ -16,7 +16,7 @@ const userSchema = new mongoose.Schema({
   memberSince: { type: Number, default: () => new Date().getFullYear() },
   fcmTokens: { type: [String], default: [] },
   profilePhoto: { type: String, default: '' },
-  settings: {
+    settings: {
     type: Object,
     default: {
       visibility: true,
@@ -24,7 +24,9 @@ const userSchema = new mongoose.Schema({
       messages: true,
       weeklyDigest: false
     }
-  }
+  },
+  isPremium: { type: Boolean, default: false },
+  premiumUntil: { type: Date }
 });
 
 // ChatSession Schema
@@ -64,11 +66,73 @@ const bookingSessionSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
+// Assessment Schema
+const assessmentSchema = new mongoose.Schema({
+  creator: { type: String, required: true, lowercase: true, trim: true },
+  partner: { type: String, required: true, lowercase: true, trim: true },
+  skill: { type: String, required: true },
+  name: { type: String, required: true },
+  instructions: { type: String, default: '' },
+  duration: { type: Number, required: true }, // in minutes
+  passingPercentage: { type: Number, required: true, default: 50 },
+  negativeMarking: { type: Boolean, default: false },
+  questionCount: { type: Number, required: true, default: 10 },
+  randomize: { type: Boolean, default: false },
+  allowedAttempts: { type: Number, default: 1 },
+  certificateEligible: { type: Boolean, default: true },
+  requireCamera: { type: Boolean, default: false },
+  requireMic: { type: Boolean, default: false },
+  status: { type: String, enum: ['draft', 'published'], default: 'draft' },
+  premiumPolicy: {
+    type: Object,
+    default: {
+      requirePremium: false,
+      firstAttemptFree: true
+    }
+  },
+  createdAt: { type: Date, default: Date.now }
+});
+
+// Assessment Question Schema
+const assessmentQuestionSchema = new mongoose.Schema({
+  assessmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Assessment', required: true },
+  type: { type: String, enum: ['MCQ', 'Coding', 'TrueFalse', 'MultipleAnswer'], required: true },
+  questionText: { type: String, required: true },
+  options: { type: [String], default: [] },
+  correctAnswers: { type: [String], required: true },
+  marks: { type: Number, required: true, default: 1 },
+  timeLimit: { type: Number }, // in seconds, optional per question timer
+  explanation: { type: String, default: '' },
+  difficulty: { type: String, enum: ['Easy', 'Medium', 'Hard'], default: 'Medium' },
+  testCases: { type: Array, default: [] } // Array of { input: string, output: string }
+});
+
+// Assessment Attempt Schema
+const assessmentAttemptSchema = new mongoose.Schema({
+  assessmentId: { type: mongoose.Schema.Types.ObjectId, ref: 'Assessment', required: true },
+  learner: { type: String, required: true, lowercase: true, trim: true },
+  startTime: { type: Date, default: Date.now },
+  endTime: { type: Date },
+  score: { type: Number, default: 0 },
+  totalMarks: { type: Number, default: 0 },
+  percentage: { type: Number, default: 0 },
+  passed: { type: Boolean, default: false },
+  correctCount: { type: Number, default: 0 },
+  wrongCount: { type: Number, default: 0 },
+  skippedCount: { type: Number, default: 0 },
+  answers: { type: Array, default: [] }, // Array of { questionId, submittedAnswers, isCorrect }
+  violations: { type: Array, default: [] },
+  status: { type: String, enum: ['in-progress', 'completed', 'terminated'], default: 'in-progress' }
+});
+
 const User = mongoose.model('User', userSchema);
 const ChatSession = mongoose.model('ChatSession', chatSessionSchema);
 const SwapRequest = mongoose.model('SwapRequest', swapRequestSchema);
 const ChatMessage = mongoose.model('ChatMessage', chatMessageSchema);
 const BookingSession = mongoose.model('BookingSession', bookingSessionSchema);
+const Assessment = mongoose.model('Assessment', assessmentSchema);
+const AssessmentQuestion = mongoose.model('AssessmentQuestion', assessmentQuestionSchema);
+const AssessmentAttempt = mongoose.model('AssessmentAttempt', assessmentAttemptSchema);
 
 // User CRUD Helpers
 async function getUserByEmail(email) {
@@ -191,6 +255,17 @@ async function updateUserEmail(oldEmail, newEmail) {
     { $set: { provider: newEmailLower } }
   );
 
+  return updatedUser;
+}
+
+async function updateUserPremiumStatus(email, isPremium) {
+  if (!email) return null;
+  const emailLower = email.toLowerCase();
+  const updatedUser = await User.findOneAndUpdate(
+    { email: emailLower },
+    { $set: { isPremium: isPremium } },
+    { new: true }
+  );
   return updatedUser;
 }
 
@@ -564,9 +639,14 @@ module.exports = {
   updateBookingSessionStatus,
   saveFcmToken,
   getUserFcmTokens,
+  updateUserPremiumStatus,
   updateUserSettings,
   updateUserPassword,
   updateUserEmail,
   updateUserProfilePhoto,
-  deleteAccount
+  deleteAccount,
+  Assessment,
+  AssessmentQuestion,
+  AssessmentAttempt,
+  User
 };

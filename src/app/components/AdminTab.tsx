@@ -21,6 +21,7 @@ interface UserData {
   rating?: number;
   exchanges?: number;
   memberSince?: number;
+  isPremium?: boolean;
 }
 
 interface StatsData {
@@ -231,6 +232,28 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
     } catch (e: any) {
       toast.error('Database reset failed.');
       addLog(`[ERROR] Wipe halted: ${e.message}`);
+    }
+  };
+
+  const togglePremium = async (email: string, currentStatus: boolean) => {
+    try {
+      addLog(`Toggling premium status for ${email} to ${!currentStatus}...`);
+      const res = await fetch(`${API_URL}/api/admin/users/${encodeURIComponent(email)}/premium`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isPremium: !currentStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Premium status updated for ${email}`);
+        setUsers(users.map(u => u.email === email ? { ...u, isPremium: !currentStatus } : u));
+        addLog(`[SUCCESS] Premium status for ${email} changed to ${!currentStatus}`);
+      } else {
+        throw new Error(data.error || 'Failed to update premium status');
+      }
+    } catch (e: any) {
+      toast.error('Could not update premium status.');
+      addLog(`[ERROR] Toggle premium failed: ${e.message}`);
     }
   };
 
@@ -503,6 +526,7 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
                     <th className="p-4">Member Info</th>
                     <th className="p-4">Offered Skill</th>
                     <th className="p-4">Wanted Skill</th>
+                    <th className="p-4 text-center">Assessment Limit</th>
                     <th className="p-4 text-center">Rating</th>
                     <th className="p-4 text-center">Swaps</th>
                     <th className="p-4 text-right">Actions</th>
@@ -536,6 +560,20 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
                         </td>
                         <td className="p-4">
                           <SkillPill label={u.skillWant} type="want" />
+                        </td>
+                        <td className="p-4 text-center">
+                          <button
+                            onClick={() => togglePremium(u.email, !!u.isPremium)}
+                            className={`px-3 py-1.5 text-[10px] font-bold rounded-full transition-all border flex items-center gap-1.5 mx-auto ${
+                              u.isPremium 
+                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
+                                : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                            }`}
+                            title={u.isPremium ? 'Click to allow unlimited access' : 'Click to restrict (first assessment free only)'}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full inline-block ${u.isPremium ? 'bg-red-500' : 'bg-emerald-500'}`} />
+                            {u.isPremium ? 'Restricted' : 'Free Access'}
+                          </button>
                         </td>
                         <td className="p-4 text-center font-semibold text-foreground">
                           <div className="flex items-center justify-center gap-1">

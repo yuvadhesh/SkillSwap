@@ -97,26 +97,84 @@ const io = new Server(server, {
 
 // app.use(cors());
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://skill-swap-seven-eta.vercel.app',
-    'https://skill-swap-hsgx3ysf3-yuvadheshs-projects.vercel.app'
-
-  ],
+  origin: function(origin, callback) {
+    // Allow all localhost origins (any port) and production URLs
+    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) ||
+      ['https://skill-swap-seven-eta.vercel.app',
+       'https://skill-swap-hsgx3ysf3-yuvadheshs-projects.vercel.app'].includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true
 }));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// Connect to MongoDB
-mongoose.connect(process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/skillswap')
-  .then(() => {
-    console.log('MongoDB Connected Successfully');
-    db.seedAdmin();
-  })
-  .catch((err) => {
-    console.error('MongoDB Connection Error:', err);
+// Cloud Execution Proxy (Bypasses CORS and doesn't require local compilers)
+app.post('/api/execute', async (req, res) => {
+  const pistonApis = [
+    'https://piston.pylex.me/api/v2/execute',
+    'https://api.piston.rs/api/v2/execute',
+    'https://piston.toastypiston.com/api/v2/execute'
+  ];
+
+  const payload = req.body;
+  // If version is *, keep it, otherwise piston APIs handle it.
+  
+  let lastError = '';
+  for (const apiUrl of pistonApis) {
+    try {
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+        // abort fetch after 10s
+        signal: AbortSignal.timeout(10000)
+      });
+      
+      if (response.ok) {
+        const data = await response.json();
+        return res.json(data);
+      } else {
+        const errText = await response.text();
+        console.warn(`[Proxy] API ${apiUrl} failed with status ${response.status}: ${errText}`);
+        lastError = errText;
+      }
+    } catch (e) {
+      console.warn(`[Proxy] API ${apiUrl} unreachable:`, e.message);
+      lastError = e.message;
+    }
+  }
+  
+  return res.status(500).json({ 
+    message: 'All public code execution servers are currently busy or unavailable. Please try again later.',
+    details: lastError
   });
+});
+
+// Connect to MongoDB with retry
+const MONGO_URI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/skillswap';
+
+function connectWithRetry(retries = 5, delay = 3000) {
+  console.log(`Connecting to MongoDB... (${retries} attempts remaining)`);
+  mongoose.connect(MONGO_URI)
+    .then(() => {
+      console.log('✅ MongoDB Connected Successfully');
+      db.seedAdmin();
+    })
+    .catch((err) => {
+      console.error('❌ MongoDB Connection Error:', err.message);
+      if (retries > 0) {
+        console.log(`Retrying in ${delay / 1000}s...`);
+        setTimeout(() => connectWithRetry(retries - 1, delay), delay);
+      } else {
+        console.error('All MongoDB connection attempts failed. Server will continue without DB.');
+      }
+    });
+}
+connectWithRetry();
 
 // Root route to prevent blank page
 app.get('/', (req, res) => {
@@ -130,6 +188,9 @@ app.get('/', (req, res) => {
     </div>
   `);
 });
+
+const assessmentRoutes = require('./assessmentRoutes.cjs');
+app.use('/api/assessments', assessmentRoutes);
 
 // Auth Routes
 app.post('/api/register', async (req, res) => {
@@ -811,6 +872,21 @@ app.put('/api/admin/users/:id', async (req, res) => {
   }
 });
 
+app.put('/api/admin/users/:email/premium', async (req, res) => {
+  const { email } = req.params;
+  const { isPremium } = req.body;
+  try {
+    const updated = await db.updateUserPremiumStatus(email, isPremium);
+    if (!updated) {
+      return res.status(404).json({ error: 'User not found.' });
+    }
+    res.json({ success: true, user: updated });
+  } catch (error) {
+    console.error('Toggle premium admin error:', error);
+    res.status(500).json({ error: 'An error occurred while updating premium status.' });
+  }
+});
+
 app.delete('/api/admin/users/:id', async (req, res) => {
   const { id } = req.params;
   try {
@@ -1040,10 +1116,24 @@ io.on('connection', (socket) => {
 
 });
 
-// Start Server
-server.listen(PORT, async () => {
-  console.log(`Express server with Socket.io is running on http://localhost:${PORT}`);
-  
-  // Initialize Background Cron Jobs
-  initCronJobs(admin && admin.apps && admin.apps.length > 0 ? admin : null);
-});
+// Start Server — auto-find next available port if PORT is in use
+function startServer(port) {
+  server.listen(port, async () => {
+    console.log(`✅ Express server with Socket.io is running on http://localhost:${port}`);
+    // Initialize Background Cron Jobs
+    initCronJobs(admin && admin.apps && admin.apps.length > 0 ? admin : null);
+  });
+
+  server.on('error', (err) => {
+    if (err.code === 'EADDRINUSE') {
+      console.warn(`⚠️  Port ${port} is in use, trying ${port + 1}...`);
+      server.close();
+      startServer(port + 1);
+    } else {
+      console.error('Server error:', err);
+      process.exit(1);
+    }
+  });
+}
+
+startServer(PORT);

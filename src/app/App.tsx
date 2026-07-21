@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2, Menu, X as XIcon, ChevronLeft } from 'lucide-react';
+import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2, Menu, X as XIcon, ChevronLeft, BookOpen } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { API_URL } from '../config.js';
 import { io } from 'socket.io-client';
@@ -10,8 +10,10 @@ import AdminTab from './components/AdminTab';
 import { requestFirebaseToken, onMessageListener } from './firebase';
 import VideoCall from './components/VideoCall';
 
+import AssessmentTab from './components/AssessmentTab';
+
 type Page = 'register' | 'login' | 'dashboard' | 'forgot-password' | 'reset-password';
-type Tab = 'home' | 'matches' | 'search' | 'requests' | 'bookings' | 'profile' | 'settings' | 'chatbot' | 'admin';
+type Tab = 'home' | 'matches' | 'search' | 'requests' | 'bookings' | 'profile' | 'settings' | 'chatbot' | 'admin' | 'assessment';
 
 interface UserData {
   name: string;
@@ -796,7 +798,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
           </div>
 
           {/* Tab content */}
-          <div className={activeTab === 'chatbot' ? 'flex-1 h-0 overflow-hidden' : activeTab === 'admin' || activeTab === 'search' || activeTab === 'requests' || activeTab === 'bookings' ? 'flex-1 h-0 overflow-y-auto p-4 md:p-6 bg-[#f5f5f7]' : 'p-4 md:p-6'}>
+          <div className={activeTab === 'chatbot' ? 'flex-1 h-0 overflow-hidden' : activeTab === 'admin' || activeTab === 'search' || activeTab === 'requests' || activeTab === 'bookings' || activeTab === 'assessment' ? 'flex-1 h-0 overflow-y-auto p-4 md:p-6 bg-[#f5f5f7]' : 'flex-1 h-0 overflow-y-auto p-4 md:p-6'}>
             {activeTab === 'home' && <HomeTab user={user} matches={matches} loading={matchesLoading} activities={activities} />}
             {activeTab === 'matches' && <MatchesTab user={user} matches={matches} loading={matchesLoading} onAddActivity={addActivity} requests={requests} fetchRequests={fetchRequests} setActiveChatUser={setActiveChatUser} setActiveBookingUser={setActiveBookingUser} />}
             {activeTab === 'requests' && <RequestsTab user={user} requests={requests} loading={requestsLoading} fetchRequests={fetchRequests} onAddActivity={addActivity} onTabChange={onTabChange} setChatbotInitialPrompt={setChatbotInitialPrompt} />}
@@ -822,6 +824,9 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
             {activeTab === 'profile' && <ProfileTab user={user} onUpdate={onUserUpdate} onAddActivity={addActivity} />}
             {activeTab === 'settings' && (
               <SettingsTab user={user} onUserUpdate={onUserUpdate} onLogout={onLogout} />
+            )}
+            {activeTab === 'assessment' && (
+              <AssessmentTab user={user} requests={requests} />
             )}
             {activeTab === 'admin' && <AdminTab currentUser={user} />}
           </div>
@@ -893,6 +898,7 @@ function Sidebar({ activeTab, onTabChange, onLogoutClick, matchesCount, requests
     { id: 'chatbot', icon: <Bot className="w-5 h-5" />, label: 'AI Chatbot' },
     { id: 'profile', icon: <User className="w-5 h-5" />, label: 'Profile' },
     { id: 'settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
+    { id: 'assessment', icon: <BookOpen className="w-5 h-5" />, label: 'Online Assessment' },
   ];
 
   if (isAdmin) {
