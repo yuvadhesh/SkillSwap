@@ -268,38 +268,6 @@ export default function AssessmentCreation({ user, acceptedSwaps, onBack, onCrea
             </label>
           </div>
 
-          {/* Premium Policy Section */}
-          <div className="p-5 bg-gradient-to-r from-yellow-500/10 to-orange-500/10 border border-yellow-500/20 rounded-xl space-y-4">
-            <div className="flex items-center gap-2 text-yellow-500 font-bold">
-              <ShieldAlert className="w-5 h-5" />
-              Premium Access Policy
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <label className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  name="premiumPolicy.requirePremium"
-                  checked={formData.premiumPolicy.requirePremium}
-                  onChange={handleChange}
-                  className="w-5 h-5 rounded"
-                />
-                <span className="text-gray-700">Require Premium Subscription</span>
-              </label>
-
-              <label className="flex items-center gap-3" style={{ opacity: formData.premiumPolicy.requirePremium ? 1 : 0.5 }}>
-                <input
-                  type="checkbox"
-                  name="premiumPolicy.firstAttemptFree"
-                  checked={formData.premiumPolicy.firstAttemptFree}
-                  onChange={handleChange}
-                  disabled={!formData.premiumPolicy.requirePremium}
-                  className="w-5 h-5 rounded"
-                />
-                <span className="text-gray-700">Allow First Attempt Free</span>
-              </label>
-            </div>
-          </div>
 
           <div className="pt-6 flex justify-end">
             <button
