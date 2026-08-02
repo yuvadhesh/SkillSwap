@@ -16,12 +16,12 @@ router.get('/dashboard', async (req, res) => {
     // Completed by user
     const completedAttempts = await db.AssessmentAttempt.find({ learner: lowerEmail, status: { $in: ['completed', 'terminated'] } }).populate('assessmentId').sort({ endTime: -1 });
     
-    // Available to user (where user is learner) - all published tests not created by them
-    let assignedAssessments = await db.Assessment.find({ creator: { $ne: lowerEmail }, status: 'published' }).sort({ createdAt: -1 });
-    
-    // Filter out assessments that the user has already completed
-    const completedIds = completedAttempts.map(a => a.assessmentId?._id?.toString()).filter(Boolean);
-    assignedAssessments = assignedAssessments.filter(a => !completedIds.includes(a._id.toString()));
+    // Available to user (where user is learner) - all published tests not created by them and not hidden by them
+    let assignedAssessments = await db.Assessment.find({ 
+      creator: { $ne: lowerEmail }, 
+      status: 'published',
+      hiddenBy: { $ne: lowerEmail }
+    }).sort({ createdAt: -1 });
     
     res.json({
       success: true,
@@ -34,6 +34,74 @@ router.get('/dashboard', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch dashboard data' });
+  }
+});
+
+// Get Admin Test Reports (Daily stats + all attempts)
+router.get('/admin/reports', async (req, res) => {
+  try {
+    const attempts = await db.AssessmentAttempt.find()
+      .populate('assessmentId')
+      .sort({ endTime: -1, startTime: -1 });
+
+    const formattedAttempts = attempts.map(att => {
+      const dateObj = att.endTime || att.startTime || new Date();
+      const dateStr = new Date(dateObj).toISOString().split('T')[0];
+      return {
+        _id: att._id,
+        assessmentName: att.assessmentId?.name || 'Deleted Assessment',
+        skill: att.assessmentId?.skill || 'General',
+        learner: att.learner,
+        score: att.score || 0,
+        totalMarks: att.totalMarks || 0,
+        percentage: att.percentage || 0,
+        passed: att.passed || false,
+        status: att.status,
+        violationsCount: att.violations ? att.violations.length : 0,
+        startTime: att.startTime,
+        endTime: att.endTime,
+        date: dateStr
+      };
+    });
+
+    const dailyMap = {};
+    formattedAttempts.forEach(att => {
+      const d = att.date;
+      if (!dailyMap[d]) {
+        dailyMap[d] = {
+          date: d,
+          total: 0,
+          completed: 0,
+          terminated: 0,
+          passed: 0,
+          failed: 0,
+          sumPercentage: 0
+        };
+      }
+      dailyMap[d].total += 1;
+      if (att.status === 'completed') dailyMap[d].completed += 1;
+      if (att.status === 'terminated') dailyMap[d].terminated += 1;
+      if (att.passed) dailyMap[d].passed += 1;
+      else if (att.status === 'completed') dailyMap[d].failed += 1;
+      dailyMap[d].sumPercentage += att.percentage;
+    });
+
+    const dailyStats = Object.values(dailyMap).map(d => ({
+      ...d,
+      avgPercentage: d.total > 0 ? (d.sumPercentage / d.total).toFixed(1) : 0,
+      passRate: d.completed > 0 ? ((d.passed / d.completed) * 100).toFixed(1) : 0
+    })).sort((a, b) => b.date.localeCompare(a.date));
+
+    res.json({
+      success: true,
+      data: {
+        attempts: formattedAttempts,
+        dailyStats
+      }
+    });
+  } catch (err) {
+    console.error('Admin reports error:', err);
+    res.status(500).json({ error: 'Failed to fetch assessment reports' });
   }
 });
 
@@ -152,6 +220,26 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete assessment' });
+  }
+});
+
+// Hide Assessment for user
+router.post('/:id/hide', async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) return res.status(400).json({ error: 'Email is required' });
+    
+    const assessment = await db.Assessment.findByIdAndUpdate(
+      req.params.id,
+      { $addToSet: { hiddenBy: email.toLowerCase() } },
+      { new: true }
+    );
+    
+    if (!assessment) return res.status(404).json({ error: 'Assessment not found' });
+    res.json({ success: true, message: 'Assessment hidden successfully' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to hide assessment' });
   }
 });
 

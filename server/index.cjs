@@ -192,6 +192,11 @@ app.get('/', (req, res) => {
 const assessmentRoutes = require('./assessmentRoutes.cjs');
 app.use('/api/assessments', assessmentRoutes);
 
+const paymentRoutes = require('./paymentRoutes.cjs');
+app.use('/api/payments', paymentRoutes);
+
+const adminPremiumRoutes = require('./adminPremiumRoutes.cjs');
+app.use('/api/admin/premium', adminPremiumRoutes);
 // Auth Routes
 app.post('/api/register', async (req, res) => {
   const { firstName, lastName, email, skillOffer, skillWant, password } = req.body;

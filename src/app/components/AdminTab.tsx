@@ -2,13 +2,16 @@ import React, { useState, useEffect } from 'react';
 import { 
   Users, Shield, Edit, Trash2, ArrowUpRight, BarChart3, 
   Database, RefreshCw, X, Plus, Search, Star, MessageSquare, 
-  Award, ArrowLeftRight, Terminal, CheckCircle2, AlertTriangle, ShieldCheck
+  Award, ArrowLeftRight, Terminal, CheckCircle2, AlertTriangle, ShieldCheck,
+  FileText, Download, Clock
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { API_URL } from '../../config';
 import { 
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
+import AdminMembershipManagement from './AdminMembershipManagement';
+import UnauthorizedPage from './UnauthorizedPage';
 
 interface UserData {
   _id?: string;
@@ -22,6 +25,8 @@ interface UserData {
   exchanges?: number;
   memberSince?: number;
   isPremium?: boolean;
+  paymentStatus?: string;
+  membershipType?: string;
 }
 
 interface StatsData {
@@ -33,6 +38,10 @@ interface StatsData {
 }
 
 export default function AdminTab({ currentUser }: { currentUser: any }) {
+  if (currentUser?.email !== 'admin@skillswap.com' && currentUser?.role !== 'ADMIN') {
+    return <UnauthorizedPage onBack={() => window.location.reload()} />;
+  }
+
   const [users, setUsers] = useState<UserData[]>([]);
   const [stats, setStats] = useState<StatsData>({
     totalUsers: 0,
@@ -42,7 +51,11 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
     wantedSkills: []
   });
   const [loading, setLoading] = useState(true);
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'analytics' | 'settings'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'analytics' | 'reports' | 'settings' | 'payments'>('dashboard');
+  
+  // Assessment Reports State
+  const [testReports, setTestReports] = useState<{ attempts: any[]; dailyStats: any[] }>({ attempts: [], dailyStats: [] });
+  const [loadingReports, setLoadingReports] = useState(false);
   
   // Search & Filter
   const [searchQuery, setSearchQuery] = useState('');
@@ -97,9 +110,67 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
     }
   };
 
+  const fetchTestReports = async () => {
+    setLoadingReports(true);
+    try {
+      const res = await fetch(`${API_URL}/api/assessments/admin/reports`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success) {
+          setTestReports(data.data);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to fetch test reports:', err);
+    } finally {
+      setLoadingReports(false);
+    }
+  };
+
+  const downloadCSV = () => {
+    if (!testReports.attempts || testReports.attempts.length === 0) {
+      toast.error('No test report data available to download.');
+      return;
+    }
+
+    const headers = ['Date', 'Learner Email', 'Assessment Name', 'Skill', 'Score', 'Total Marks', 'Percentage (%)', 'Status', 'Passed', 'Violations Count'];
+    
+    const rows = testReports.attempts.map(att => [
+      `"${att.date || ''}"`,
+      `"${att.learner || ''}"`,
+      `"${(att.assessmentName || '').replace(/"/g, '""')}"`,
+      `"${(att.skill || '').replace(/"/g, '""')}"`,
+      att.score,
+      att.totalMarks,
+      att.percentage ? att.percentage.toFixed(1) : 0,
+      `"${att.status || ''}"`,
+      att.passed ? 'YES' : 'NO',
+      att.violationsCount || 0
+    ]);
+
+    const csvContent = 'data:text/csv;charset=utf-8,' 
+      + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodedUri);
+    link.setAttribute('download', `Assessment_Report_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    toast.success('Excel (.csv) report downloaded successfully!');
+  };
+
   useEffect(() => {
     fetchAdminData();
+    fetchTestReports();
   }, []);
+
+  useEffect(() => {
+    if (activeSubTab === 'reports') {
+      fetchTestReports();
+    }
+  }, [activeSubTab]);
 
   const handleUpdateUser = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,24 +307,35 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
   };
 
   const togglePremium = async (email: string, currentStatus: boolean) => {
+    const grantAccess = !currentStatus;
     try {
-      addLog(`Toggling premium status for ${email} to ${!currentStatus}...`);
+      addLog(`${grantAccess ? 'Granting' : 'Revoking'} access for ${email}...`);
       const res = await fetch(`${API_URL}/api/admin/users/${encodeURIComponent(email)}/premium`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPremium: !currentStatus })
+        body: JSON.stringify({ isPremium: grantAccess })
       });
       const data = await res.json();
       if (data.success) {
-        toast.success(`Premium status updated for ${email}`);
-        setUsers(users.map(u => u.email === email ? { ...u, isPremium: !currentStatus } : u));
-        addLog(`[SUCCESS] Premium status for ${email} changed to ${!currentStatus}`);
+        const label = grantAccess ? 'Free Access' : 'Restricted';
+        toast.success(`${email} → ${label}`);
+        // Sync all related fields in local state immediately
+        setUsers(users.map(u => u.email === email
+          ? {
+              ...u,
+              isPremium: grantAccess,
+              membershipType: grantAccess ? 'PREMIUM' : 'FREE',
+              paymentStatus: grantAccess ? 'paid' : 'unpaid'
+            }
+          : u
+        ));
+        addLog(`[SUCCESS] ${email} access set to: ${label}`);
       } else {
         throw new Error(data.error || 'Failed to update premium status');
       }
     } catch (e: any) {
-      toast.error('Could not update premium status.');
-      addLog(`[ERROR] Toggle premium failed: ${e.message}`);
+      toast.error('Could not update access status.');
+      addLog(`[ERROR] Toggle access failed: ${e.message}`);
     }
   };
 
@@ -363,6 +445,16 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
           Skill Analytics
         </button>
         <button
+          onClick={() => setActiveSubTab('reports')}
+          className={`px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+            activeSubTab === 'reports'
+              ? 'border-[var(--brand)] text-[var(--brand)]'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Assessment Reports
+        </button>
+        <button
           onClick={() => setActiveSubTab('settings')}
           className={`px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
             activeSubTab === 'settings'
@@ -371,6 +463,16 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
           }`}
         >
           System Tools
+        </button>
+        <button
+          onClick={() => setActiveSubTab('payments')}
+          className={`px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+            activeSubTab === 'payments'
+              ? 'border-[var(--brand)] text-[var(--brand)]'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Payment Management
         </button>
       </div>
 
@@ -562,18 +664,24 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
                           <SkillPill label={u.skillWant} type="want" />
                         </td>
                         <td className="p-4 text-center">
-                          <button
-                            onClick={() => togglePremium(u.email, !!u.isPremium)}
-                            className={`px-3 py-1.5 text-[10px] font-bold rounded-full transition-all border flex items-center gap-1.5 mx-auto ${
-                              u.isPremium 
-                                ? 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100' 
-                                : 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
-                            }`}
-                            title={u.isPremium ? 'Click to allow unlimited access' : 'Click to restrict (first assessment free only)'}
-                          >
-                            <span className={`w-1.5 h-1.5 rounded-full inline-block ${u.isPremium ? 'bg-red-500' : 'bg-emerald-500'}`} />
-                            {u.isPremium ? 'Restricted' : 'Free Access'}
-                          </button>
+                          {/* Show Free Access if: admin granted OR user paid OR PREMIUM membership */}
+                          {(() => {
+                            const hasAccess = u.isPremium || u.paymentStatus === 'paid' || u.membershipType === 'PREMIUM';
+                            return (
+                              <button
+                                onClick={() => togglePremium(u.email, !!hasAccess)}
+                                className={`px-3 py-1.5 text-[10px] font-bold rounded-full transition-all border flex items-center gap-1.5 mx-auto ${
+                                  hasAccess
+                                    ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100'
+                                    : 'bg-red-50 text-red-600 border-red-200 hover:bg-red-100'
+                                }`}
+                                title={hasAccess ? 'Has Access — Click to Restrict' : 'Restricted — Click to Grant Free Access'}
+                              >
+                                <span className={`w-1.5 h-1.5 rounded-full inline-block ${hasAccess ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                {hasAccess ? 'Free Access' : 'Restricted'}
+                              </button>
+                            );
+                          })()}
                         </td>
                         <td className="p-4 text-center font-semibold text-foreground">
                           <div className="flex items-center justify-center gap-1">
@@ -660,6 +768,188 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* SUB TAB: ASSESSMENT REPORTS */}
+      {activeSubTab === 'reports' && (
+        <div className="space-y-6 animate-fadeIn">
+          {/* Header & Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-xl border border-border shadow-sm">
+            <div>
+              <h3 style={{ fontFamily: 'var(--font-head)' }} className="text-base font-bold text-foreground flex items-center gap-2">
+                <ShieldCheck className="w-5 h-5 text-[var(--brand)]" /> Assessment & Exam Analytics Reports
+              </h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Real-time daily test tracking, candidate results, and proctoring violation logs.
+              </p>
+            </div>
+            
+            <div className="flex items-center gap-3">
+              <button
+                onClick={fetchTestReports}
+                disabled={loadingReports}
+                className="px-3.5 py-2 text-xs font-semibold rounded-lg bg-secondary text-foreground hover:bg-secondary/80 transition-all flex items-center gap-2 border border-border cursor-pointer"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${loadingReports ? 'animate-spin' : ''}`} />
+                Live Sync
+              </button>
+
+              <button
+                onClick={downloadCSV}
+                className="px-4 py-2 text-xs font-bold rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white transition-all flex items-center gap-2 shadow-md cursor-pointer"
+              >
+                <Download className="w-4 h-4" />
+                Download Excel Report (.csv)
+              </button>
+            </div>
+          </div>
+
+          {/* Daily Test Summary Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="bg-gradient-to-br from-slate-900 to-slate-800 text-white p-5 rounded-xl border border-slate-700 shadow-md">
+              <div className="text-[10px] uppercase font-bold tracking-widest text-slate-300 mb-2">Total Tests (All-Time)</div>
+              <div style={{ fontFamily: 'var(--font-head)' }} className="text-3xl font-extrabold">{testReports.attempts.length}</div>
+              <p className="text-[11px] text-slate-300/80 mt-2 flex items-center gap-1">
+                <FileText className="w-3.5 h-3.5" /> Total exam attempts
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-emerald-950 to-emerald-800 text-white p-5 rounded-xl border border-emerald-900 shadow-md">
+              <div className="text-[10px] uppercase font-bold tracking-widest text-emerald-200 mb-2">Tests Taken Today</div>
+              <div style={{ fontFamily: 'var(--font-head)' }} className="text-3xl font-extrabold">
+                {testReports.dailyStats.find(d => d.date === new Date().toISOString().split('T')[0])?.total || 0}
+              </div>
+              <p className="text-[11px] text-emerald-100/80 mt-2 flex items-center gap-1">
+                <Clock className="w-3.5 h-3.5" /> Conducted today ({new Date().toISOString().split('T')[0]})
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-blue-950 to-blue-800 text-white p-5 rounded-xl border border-blue-900 shadow-md">
+              <div className="text-[10px] uppercase font-bold tracking-widest text-blue-200 mb-2">Overall Pass Rate</div>
+              <div style={{ fontFamily: 'var(--font-head)' }} className="text-3xl font-extrabold">
+                {testReports.attempts.length > 0 
+                  ? ((testReports.attempts.filter(a => a.passed).length / testReports.attempts.length) * 100).toFixed(1)
+                  : 0}%
+              </div>
+              <p className="text-[11px] text-blue-100/80 mt-2 flex items-center gap-1">
+                <CheckCircle2 className="w-3.5 h-3.5" /> Successful attempts
+              </p>
+            </div>
+
+            <div className="bg-gradient-to-br from-rose-950 to-rose-800 text-white p-5 rounded-xl border border-rose-900 shadow-md">
+              <div className="text-[10px] uppercase font-bold tracking-widest text-rose-200 mb-2">Proctoring Violations</div>
+              <div style={{ fontFamily: 'var(--font-head)' }} className="text-3xl font-extrabold">
+                {testReports.attempts.filter(a => a.status === 'terminated').length}
+              </div>
+              <p className="text-[11px] text-rose-100/80 mt-2 flex items-center gap-1">
+                <AlertTriangle className="w-3.5 h-3.5" /> Terminated for cheating/AI alerts
+              </p>
+            </div>
+          </div>
+
+          {/* Daily Test Breakdown Table */}
+          <div className="bg-white border border-border rounded-xl p-5 shadow-sm space-y-4">
+            <h4 style={{ fontFamily: 'var(--font-head)' }} className="text-sm font-bold text-foreground flex items-center gap-2">
+              <BarChart3 className="w-4 h-4 text-emerald-600" /> Daily Test Activity Breakdown
+            </h4>
+
+            {testReports.dailyStats.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">No test attempt activity recorded yet.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3 text-center">Total Tests</th>
+                      <th className="py-2.5 px-3 text-center">Completed</th>
+                      <th className="py-2.5 px-3 text-center">Passed</th>
+                      <th className="py-2.5 px-3 text-center">Failed</th>
+                      <th className="py-2.5 px-3 text-center">Terminated (Violations)</th>
+                      <th className="py-2.5 px-3 text-center">Pass Rate</th>
+                      <th className="py-2.5 px-3 text-center">Avg Score</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {testReports.dailyStats.map((stat, i) => (
+                      <tr key={i} className="hover:bg-muted/20 transition-colors">
+                        <td className="py-3 px-3 font-bold text-foreground">{stat.date}</td>
+                        <td className="py-3 px-3 text-center font-extrabold text-foreground">{stat.total}</td>
+                        <td className="py-3 px-3 text-center text-emerald-600 font-semibold">{stat.completed}</td>
+                        <td className="py-3 px-3 text-center text-emerald-600">{stat.passed}</td>
+                        <td className="py-3 px-3 text-center text-amber-600">{stat.failed}</td>
+                        <td className="py-3 px-3 text-center text-rose-600 font-bold">{stat.terminated}</td>
+                        <td className="py-3 px-3 text-center font-bold text-blue-600">{stat.passRate}%</td>
+                        <td className="py-3 px-3 text-center font-semibold text-foreground">{stat.avgPercentage}%</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
+
+          {/* Detailed All Attempts Log */}
+          <div className="bg-white border border-border rounded-xl p-5 shadow-sm space-y-4">
+            <div className="flex items-center justify-between">
+              <h4 style={{ fontFamily: 'var(--font-head)' }} className="text-sm font-bold text-foreground flex items-center gap-2">
+                <FileText className="w-4 h-4 text-indigo-600" /> Detailed Candidate Attempt Log
+              </h4>
+              <span className="text-xs text-muted-foreground font-medium">Showing {testReports.attempts.length} attempts</span>
+            </div>
+
+            {testReports.attempts.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-6">No test attempt records found.</p>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs text-left border-collapse">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/40 text-muted-foreground font-bold uppercase tracking-wider">
+                      <th className="py-2.5 px-3">Date</th>
+                      <th className="py-2.5 px-3">Learner Email</th>
+                      <th className="py-2.5 px-3">Assessment Name</th>
+                      <th className="py-2.5 px-3">Skill</th>
+                      <th className="py-2.5 px-3 text-center">Score %</th>
+                      <th className="py-2.5 px-3 text-center">Result</th>
+                      <th className="py-2.5 px-3 text-center">Status</th>
+                      <th className="py-2.5 px-3 text-center">AI Violations</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {testReports.attempts.map((att) => (
+                      <tr key={att._id} className="hover:bg-muted/20 transition-colors">
+                        <td className="py-3 px-3 text-muted-foreground font-mono">{att.date}</td>
+                        <td className="py-3 px-3 font-semibold text-foreground">{att.learner}</td>
+                        <td className="py-3 px-3 font-medium text-foreground">{att.assessmentName}</td>
+                        <td className="py-3 px-3 text-blue-600 font-medium">{att.skill}</td>
+                        <td className="py-3 px-3 text-center font-bold">{att.percentage ? att.percentage.toFixed(1) : 0}%</td>
+                        <td className="py-3 px-3 text-center">
+                          {att.passed ? (
+                            <span className="bg-emerald-500/15 text-emerald-700 px-2 py-0.5 rounded text-[11px] font-bold border border-emerald-500/30">PASSED</span>
+                          ) : (
+                            <span className="bg-rose-500/15 text-rose-700 px-2 py-0.5 rounded text-[11px] font-bold border border-rose-500/30">FAILED</span>
+                          )}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {att.status === 'completed' && <span className="text-emerald-600 font-semibold">Completed</span>}
+                          {att.status === 'terminated' && <span className="text-rose-600 font-extrabold">Terminated</span>}
+                          {att.status === 'in-progress' && <span className="text-amber-600 font-semibold">In Progress</span>}
+                        </td>
+                        <td className="py-3 px-3 text-center">
+                          {att.violationsCount > 0 ? (
+                            <span className="bg-rose-100 text-rose-700 px-2 py-0.5 rounded font-bold">{att.violationsCount} Alert(s)</span>
+                          ) : (
+                            <span className="text-muted-foreground">0</span>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -1043,6 +1333,11 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
             </div>
           </div>
         </div>
+      )}
+
+      {/* SUB TAB PAYMENTS */}
+      {activeSubTab === 'payments' && (
+        <AdminMembershipManagement currentUser={currentUser} />
       )}
     </div>
   );

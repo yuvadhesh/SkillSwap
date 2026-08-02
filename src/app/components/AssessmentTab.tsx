@@ -83,6 +83,25 @@ export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
     }
   };
 
+  const handleHideAssessment = async (id: string) => {
+    try {
+      const res = await fetch(`${API_URL}/api/assessments/${id}/hide`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user?.email }),
+      });
+      if (res.ok) {
+        toast.success('Assessment removed from your list.');
+        fetchDashboardData();
+      } else {
+        toast.error('Failed to hide assessment.');
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to hide assessment.');
+    }
+  };
+
   // --- Sub-views ---
   if (activeView === 'create') {
     return (
@@ -224,7 +243,14 @@ export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
                 </p>
               ) : (
                 dashboardData.assigned.map((a: any) => (
-                  <AssessmentCard key={a._id} assessment={a} onAction={() => handleStartAssessment(a)} actionLabel="Start" actionColor="#3b82f6" />
+                  <AssessmentCard
+                    key={a._id}
+                    assessment={a}
+                    onAction={() => handleStartAssessment(a)}
+                    actionLabel="Start"
+                    actionColor="#3b82f6"
+                    onHide={() => handleHideAssessment(a._id)}
+                  />
                 ))
               )}
             </Panel>
@@ -355,8 +381,8 @@ function Panel({ title, icon, children }: { title: string; icon: React.ReactNode
   );
 }
 
-function AssessmentCard({ assessment, onAction, actionLabel, actionColor }: {
-  assessment: any; onAction: () => void; actionLabel: string; actionColor: string;
+function AssessmentCard({ assessment, onAction, actionLabel, actionColor, onHide }: {
+  assessment: any; onAction: () => void; actionLabel: string; actionColor: string; onHide?: () => void;
 }) {
   return (
     <div style={{
@@ -374,13 +400,29 @@ function AssessmentCard({ assessment, onAction, actionLabel, actionColor }: {
       </p>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span style={{ color: '#4b5563', fontSize: '12px' }}>By: {assessment.creator}</span>
-        <button onClick={onAction} style={{
-          background: actionColor + '22', color: actionColor, border: `1px solid ${actionColor}44`,
-          padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
-          fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px'
-        }}>
-          <Play style={{ width: 14, height: 14 }} /> {actionLabel}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          {onHide && (
+            <button
+              onClick={onHide}
+              title="Remove from list"
+              style={{
+                background: 'rgba(239,68,68,0.1)', color: '#ef4444',
+                border: '1px solid rgba(239,68,68,0.3)',
+                padding: '6px 10px', borderRadius: '8px', cursor: 'pointer',
+                fontSize: '13px', display: 'flex', alignItems: 'center', gap: '4px'
+              }}
+            >
+              🗑 Remove
+            </button>
+          )}
+          <button onClick={onAction} style={{
+            background: actionColor + '22', color: actionColor, border: `1px solid ${actionColor}44`,
+            padding: '6px 14px', borderRadius: '8px', cursor: 'pointer', fontWeight: 700,
+            fontSize: '13px', display: 'flex', alignItems: 'center', gap: '6px'
+          }}>
+            <Play style={{ width: 14, height: 14 }} /> {actionLabel}
+          </button>
+        </div>
       </div>
     </div>
   );

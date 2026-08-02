@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2, Menu, X as XIcon, ChevronLeft, BookOpen } from 'lucide-react';
+import { Code, Camera, BarChart3, PenTool, Home, ArrowLeftRight, User, Settings, LogOut, Bell, ArrowRight, CheckCircle, MessageSquare, Star, ArrowUpRight, Edit, Repeat, Bot, Send, Sparkles, Plus, Trash2, MessageSquarePlus, RefreshCw, Shield, Users, Search, Calendar as CalendarIcon, Clock, CalendarCheck, Check, FileText, Video, Paperclip, Download, Loader2, Menu, X as XIcon, ChevronLeft, BookOpen, CreditCard } from 'lucide-react';
 import { toast, Toaster } from 'sonner';
 import { API_URL } from '../config.js';
 import { io } from 'socket.io-client';
@@ -11,9 +11,10 @@ import { requestFirebaseToken, onMessageListener } from './firebase';
 import VideoCall from './components/VideoCall';
 
 import AssessmentTab from './components/AssessmentTab';
+import PaymentTab from './components/PaymentTab';
 
 type Page = 'register' | 'login' | 'dashboard' | 'forgot-password' | 'reset-password';
-type Tab = 'home' | 'matches' | 'search' | 'requests' | 'bookings' | 'profile' | 'settings' | 'chatbot' | 'admin' | 'assessment';
+type Tab = 'home' | 'matches' | 'search' | 'requests' | 'bookings' | 'profile' | 'settings' | 'chatbot' | 'admin' | 'assessment' | 'payment';
 
 interface UserData {
   name: string;
@@ -33,6 +34,11 @@ interface UserData {
     messages: boolean;
     weeklyDigest: boolean;
   };
+  isPremium?: boolean;
+  paymentStatus?: string;
+  paymentCount?: number;
+  transactionId?: string;
+  paymentDate?: string;
 }
 
 interface ActivityLogItem {
@@ -506,6 +512,28 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
   const [bookings, setBookings] = useState<{incoming: any[], outgoing: any[]}>({incoming: [], outgoing: []});
   const [bookingsLoading, setBookingsLoading] = useState(true);
 
+  // Background polling for live user profile updates (e.g. admin toggling Free Access)
+  useEffect(() => {
+    if (!user.email) return;
+    const interval = setInterval(async () => {
+      try {
+        const data = await safeFetchJson(`/api/profile/me?email=${encodeURIComponent(user.email)}`);
+        if (data.success && data.user) {
+          if (
+            data.user.isPremium !== user.isPremium || 
+            data.user.paymentStatus !== user.paymentStatus || 
+            data.user.membershipType !== user.membershipType
+          ) {
+            onUserUpdate(data.user);
+          }
+        }
+      } catch (e) {
+        // fail silently for background polling
+      }
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [user.email, user.isPremium, user.paymentStatus, user.membershipType, onUserUpdate]);
+
   const fetchBookings = async () => {
     try {
       const data = await safeFetchJson(`/api/bookings?email=${encodeURIComponent(user.email)}`);
@@ -700,7 +728,9 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
     profile: 'Profile',
     settings: 'Settings',
     chatbot: 'AI Chatbot',
-    admin: 'System Admin Panel'
+    admin: 'System Admin Panel',
+    assessment: 'Online Assessment',
+    payment: 'Premium Subscription'
   };
 
   return (
@@ -798,7 +828,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
           </div>
 
           {/* Tab content */}
-          <div className={activeTab === 'chatbot' ? 'flex-1 h-0 overflow-hidden' : activeTab === 'admin' || activeTab === 'search' || activeTab === 'requests' || activeTab === 'bookings' || activeTab === 'assessment' ? 'flex-1 h-0 overflow-y-auto p-4 md:p-6 bg-[#f5f5f7]' : 'flex-1 h-0 overflow-y-auto p-4 md:p-6'}>
+          <div className={activeTab === 'chatbot' ? 'flex-1 h-0 overflow-hidden' : activeTab === 'admin' || activeTab === 'search' || activeTab === 'requests' || activeTab === 'bookings' || activeTab === 'assessment' || activeTab === 'payment' ? 'flex-1 h-0 overflow-y-auto p-4 md:p-6 bg-[#f5f5f7]' : 'flex-1 h-0 overflow-y-auto p-4 md:p-6'}>
             {activeTab === 'home' && <HomeTab user={user} matches={matches} loading={matchesLoading} activities={activities} />}
             {activeTab === 'matches' && <MatchesTab user={user} matches={matches} loading={matchesLoading} onAddActivity={addActivity} requests={requests} fetchRequests={fetchRequests} setActiveChatUser={setActiveChatUser} setActiveBookingUser={setActiveBookingUser} />}
             {activeTab === 'requests' && <RequestsTab user={user} requests={requests} loading={requestsLoading} fetchRequests={fetchRequests} onAddActivity={addActivity} onTabChange={onTabChange} setChatbotInitialPrompt={setChatbotInitialPrompt} />}
@@ -826,7 +856,26 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
               <SettingsTab user={user} onUserUpdate={onUserUpdate} onLogout={onLogout} />
             )}
             {activeTab === 'assessment' && (
-              <AssessmentTab user={user} requests={requests} />
+              (user.isPremium || user.paymentStatus === 'paid' || user.membershipType === 'PREMIUM')
+                ? <AssessmentTab user={user} requests={requests} />
+                : (() => {
+                    // Redirect unpaid users to the payment tab
+                    setTimeout(() => onTabChange('payment'), 0);
+                    return (
+                      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-4">
+                        <div className="w-16 h-16 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center mb-2">
+                          <CreditCard className="w-8 h-8 text-amber-600" />
+                        </div>
+                        <h3 className="text-lg font-bold">Premium Access Required</h3>
+                        <p className="text-sm text-muted-foreground max-w-xs">
+                          Online Assessments require a premium subscription. Redirecting you to the Payment page…
+                        </p>
+                      </div>
+                    );
+                  })()
+            )}
+            {activeTab === 'payment' && (
+              <PaymentTab user={user} onUserUpdate={onUserUpdate} onTabChange={onTabChange} />
             )}
             {activeTab === 'admin' && <AdminTab currentUser={user} />}
           </div>
@@ -899,6 +948,7 @@ function Sidebar({ activeTab, onTabChange, onLogoutClick, matchesCount, requests
     { id: 'profile', icon: <User className="w-5 h-5" />, label: 'Profile' },
     { id: 'settings', icon: <Settings className="w-5 h-5" />, label: 'Settings' },
     { id: 'assessment', icon: <BookOpen className="w-5 h-5" />, label: 'Online Assessment' },
+    { id: 'payment', icon: <CreditCard className="w-5 h-5 text-amber-400" />, label: 'Premium / Pay' },
   ];
 
   if (isAdmin) {

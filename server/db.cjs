@@ -26,7 +26,17 @@ const userSchema = new mongoose.Schema({
     }
   },
   isPremium: { type: Boolean, default: false },
-  premiumUntil: { type: Date }
+  premiumUntil: { type: Date },
+  membershipType: { type: String, enum: ['FREE', 'PREMIUM'], default: 'FREE' },
+  paymentStatus: { type: String, enum: ['unpaid', 'pending', 'paid', 'rejected'], default: 'unpaid' },
+  paymentCount: { type: Number, default: 0 },
+  assessmentLimit: { type: Number, default: 1 },
+  assessmentRemaining: { type: Number, default: 1 },
+  assessmentCreatedCount: { type: Number, default: 0 },
+  assessmentAttemptCount: { type: Number, default: 0 },
+  transactionId: { type: String },
+  paymentDate: { type: Date },
+  paymentHistory: { type: Array, default: [] }
 });
 
 // ChatSession Schema
@@ -82,6 +92,7 @@ const assessmentSchema = new mongoose.Schema({
   certificateEligible: { type: Boolean, default: true },
   requireCamera: { type: Boolean, default: false },
   requireMic: { type: Boolean, default: false },
+  hiddenBy: { type: [String], default: [] },
   status: { type: String, enum: ['draft', 'published'], default: 'draft' },
   premiumPolicy: {
     type: Object,
@@ -133,6 +144,29 @@ const BookingSession = mongoose.model('BookingSession', bookingSessionSchema);
 const Assessment = mongoose.model('Assessment', assessmentSchema);
 const AssessmentQuestion = mongoose.model('AssessmentQuestion', assessmentQuestionSchema);
 const AssessmentAttempt = mongoose.model('AssessmentAttempt', assessmentAttemptSchema);
+
+// Payment Schema
+const paymentSchema = new mongoose.Schema({
+  email: { type: String, required: true, lowercase: true, trim: true },
+  transactionId: { type: String, required: true, unique: true },
+  amount: { type: Number, required: true },
+  status: { type: String, default: 'success' },
+  createdAt: { type: Date, default: Date.now }
+});
+
+const Payment = mongoose.model('Payment', paymentSchema);
+
+// Admin Log Schema
+const adminLogSchema = new mongoose.Schema({
+  adminEmail: { type: String, required: true, lowercase: true, trim: true },
+  action: { type: String, required: true },
+  targetUser: { type: String, required: true, lowercase: true, trim: true },
+  details: { type: Object, default: {} },
+  ipAddress: { type: String, default: '' },
+  timestamp: { type: Date, default: Date.now }
+});
+
+const AdminLog = mongoose.model('AdminLog', adminLogSchema);
 
 // User CRUD Helpers
 async function getUserByEmail(email) {
@@ -261,9 +295,27 @@ async function updateUserEmail(oldEmail, newEmail) {
 async function updateUserPremiumStatus(email, isPremium) {
   if (!email) return null;
   const emailLower = email.toLowerCase();
+  
+  // Sync all related fields together so there is one source of truth
+  const updateFields = isPremium
+    ? {
+        isPremium: true,
+        membershipType: 'PREMIUM',
+        paymentStatus: 'paid',
+        assessmentLimit: 5,
+        assessmentRemaining: 5
+      }
+    : {
+        isPremium: false,
+        membershipType: 'FREE',
+        paymentStatus: 'unpaid',
+        assessmentLimit: 1,
+        assessmentRemaining: 1
+      };
+
   const updatedUser = await User.findOneAndUpdate(
     { email: emailLower },
-    { $set: { isPremium: isPremium } },
+    { $set: updateFields },
     { new: true }
   );
   return updatedUser;
@@ -648,5 +700,7 @@ module.exports = {
   Assessment,
   AssessmentQuestion,
   AssessmentAttempt,
-  User
+  User,
+  Payment,
+  AdminLog
 };
