@@ -19,13 +19,15 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
   const fetchPrice = async () => {
     try {
       const res = await fetch(`${API_URL}/api/admin/premium-price`);
-      const data = await res.json();
-      if (data.success && data.price) {
-        setPrice(data.price.premiumPrice);
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
+        const data = await res.json();
+        if (data.success && data.price) {
+          setPrice(data.price.premiumPrice);
+        }
       }
     } catch (err) {
       console.error(err);
-      toast.error('Failed to fetch premium price');
     } finally {
       setLoading(false);
     }
@@ -49,6 +51,13 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
           adminEmail: adminEmail
         })
       });
+
+      const contentType = res.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        toast.error(`Server error (${res.status}): API endpoint not reaching Node.js backend.`);
+        return;
+      }
+
       const data = await res.json();
 
       if (res.ok && data.success) {

@@ -59,7 +59,8 @@ export default function PaymentTab({
   const fetchPremiumPrice = async () => {
     try {
       const res = await fetch(`${API_URL}/api/payments/premium-price`);
-      if (res.ok) {
+      const contentType = res.headers.get('content-type');
+      if (res.ok && contentType && contentType.includes('application/json')) {
         const data = await res.json();
         if (data.success && data.price) {
           setPremiumPrice(data.price.premiumPrice);
