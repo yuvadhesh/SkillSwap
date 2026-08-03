@@ -168,6 +168,16 @@ const adminLogSchema = new mongoose.Schema({
 
 const AdminLog = mongoose.model('AdminLog', adminLogSchema);
 
+// Premium Price Schema
+const premiumPriceSchema = new mongoose.Schema({
+  premiumPrice: { type: Number, required: true, default: 49 },
+  currency: { type: String, default: 'INR' },
+  lastUpdated: { type: Date, default: Date.now },
+  updatedBy: { type: String }
+});
+
+const PremiumPrice = mongoose.model('PremiumPrice', premiumPriceSchema);
+
 // User CRUD Helpers
 async function getUserByEmail(email) {
   if (!email) return null;
@@ -665,6 +675,29 @@ async function getUserFcmTokens(email) {
   return user ? user.fcmTokens : [];
 }
 
+// Premium Price Helpers
+async function getPremiumPrice() {
+  let priceDoc = await PremiumPrice.findOne();
+  if (!priceDoc) {
+    priceDoc = new PremiumPrice({ premiumPrice: 49, currency: 'INR' });
+    await priceDoc.save();
+  }
+  return priceDoc;
+}
+
+async function updatePremiumPrice(newPrice, updatedByAdmin) {
+  let priceDoc = await PremiumPrice.findOne();
+  if (!priceDoc) {
+    priceDoc = new PremiumPrice({ premiumPrice: newPrice, currency: 'INR', updatedBy: updatedByAdmin });
+  } else {
+    priceDoc.premiumPrice = newPrice;
+    priceDoc.lastUpdated = new Date();
+    priceDoc.updatedBy = updatedByAdmin;
+  }
+  await priceDoc.save();
+  return priceDoc;
+}
+
 module.exports = {
   getUserByEmail,
   createUser,
@@ -702,5 +735,8 @@ module.exports = {
   AssessmentAttempt,
   User,
   Payment,
-  AdminLog
+  AdminLog,
+  PremiumPrice,
+  getPremiumPrice,
+  updatePremiumPrice
 };

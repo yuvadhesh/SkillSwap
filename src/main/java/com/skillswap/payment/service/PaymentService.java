@@ -18,6 +18,11 @@ import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+
 @Service
 public class PaymentService {
 
@@ -30,6 +35,31 @@ public class PaymentService {
     @Value("${razorpay.key.secret}")
     private String keySecret;
 
+    @Value("${nodejs.api.url:http://localhost:5000}")
+    private String nodejsApiUrl;
+
+    private double fetchPremiumPrice() {
+        try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(nodejsApiUrl + "/api/payments/premium-price"))
+                    .GET()
+                    .build();
+            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            String body = response.body();
+            // Parse premiumPrice from JSON: {"success":true,"price":{"premiumPrice":20,...}}
+            int idx = body.indexOf("\"premiumPrice\":");
+            if (idx != -1) {
+                String sub = body.substring(idx + 15).trim();
+                String numStr = sub.split("[^0-9.]")[0];
+                return Double.parseDouble(numStr);
+            }
+        } catch (Exception e) {
+            System.err.println("[PaymentService] Could not fetch premium price from Node.js: " + e.getMessage());
+        }
+        return 49.0; // fallback default
+    }
+
     public Map<String, Object> createOrder(PaymentOrderRequest request) throws RazorpayException {
         // Check maximum payment limit
         int successfulPayments = paymentRepository.countByUserIdAndStatus(request.getUserId(), "SUCCESS");
@@ -37,8 +67,13 @@ public class PaymentService {
             throw new RuntimeException("Maximum payment limit reached.");
         }
 
+        // Use amount sent from frontend (already fetched from Node.js /api/payments/premium-price)
+        double amount = (request.getAmount() != null && request.getAmount() > 0)
+                ? request.getAmount()
+                : 49.0;
+
         JSONObject orderRequest = new JSONObject();
-        orderRequest.put("amount", request.getAmount() * 100); // amount in the smallest currency unit
+        orderRequest.put("amount", (int)(amount * 100)); // amount in smallest currency unit (paise)
         orderRequest.put("currency", "INR");
         orderRequest.put("receipt", "txn_" + System.currentTimeMillis());
 
@@ -46,7 +81,7 @@ public class PaymentService {
 
         Map<String, Object> response = new HashMap<>();
         response.put("orderId", order.get("id"));
-        response.put("amount", request.getAmount());
+        response.put("amount", amount);
         response.put("currency", order.get("currency"));
 
         return response;

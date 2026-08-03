@@ -103,4 +103,15 @@ router.get('/admin/all', async (req, res) => {
   }
 });
 
+// GET /api/payments/premium-price (Public/Authenticated route to get current price)
+router.get('/premium-price', async (req, res) => {
+  try {
+    const priceDoc = await db.getPremiumPrice();
+    res.json({ success: true, price: priceDoc });
+  } catch (err) {
+    console.error('Fetch premium price error:', err);
+    res.status(500).json({ error: 'Internal server error occurred while retrieving premium price.' });
+  }
+});
+
 module.exports = router;

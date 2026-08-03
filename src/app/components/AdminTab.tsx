@@ -11,6 +11,7 @@ import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend
 } from 'recharts';
 import AdminMembershipManagement from './AdminMembershipManagement';
+import AdminPremiumPriceSettings from './AdminPremiumPriceSettings';
 import UnauthorizedPage from './UnauthorizedPage';
 
 interface UserData {
@@ -1338,6 +1339,11 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
       {/* SUB TAB PAYMENTS */}
       {activeSubTab === 'payments' && (
         <AdminMembershipManagement currentUser={currentUser} />
+      )}
+
+      {/* SUB TAB SETTINGS */}
+      {activeSubTab === 'settings' && (
+        <AdminPremiumPriceSettings adminEmail={currentUser.email} />
       )}
     </div>
   );

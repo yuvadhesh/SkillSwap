@@ -197,6 +197,9 @@ app.use('/api/payments', paymentRoutes);
 
 const adminPremiumRoutes = require('./adminPremiumRoutes.cjs');
 app.use('/api/admin/premium', adminPremiumRoutes);
+
+const adminPremiumPriceRoutes = require('./adminPremiumPriceRoutes.cjs');
+app.use('/api/admin/premium-price', adminPremiumPriceRoutes);
 // Auth Routes
 app.post('/api/register', async (req, res) => {
   const { firstName, lastName, email, skillOffer, skillWant, password } = req.body;

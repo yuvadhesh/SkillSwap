@@ -32,6 +32,7 @@ export default function PaymentTab({
   const [loading, setLoading] = useState(false);
   const [history, setHistory] = useState<PaymentRecord[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
+  const [premiumPrice, setPremiumPrice] = useState<number>(50);
 
   // Form State
   const [cardName, setCardName] = useState('');
@@ -55,8 +56,23 @@ export default function PaymentTab({
     }
   };
 
+  const fetchPremiumPrice = async () => {
+    try {
+      const res = await fetch(`${API_URL}/api/payments/premium-price`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.price) {
+          setPremiumPrice(data.price.premiumPrice);
+        }
+      }
+    } catch (e) {
+      console.error('Failed to fetch premium price:', e);
+    }
+  };
+
   useEffect(() => {
     fetchHistory();
+    fetchPremiumPrice();
   }, [user.email]);
 
   const loadRazorpayScript = () => {
@@ -92,7 +108,7 @@ export default function PaymentTab({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: 50,
+          amount: premiumPrice,
           currency: 'INR',
           userId: user.email
         })
@@ -122,7 +138,7 @@ export default function PaymentTab({
                 razorpayOrderId: response.razorpay_order_id,
                 razorpaySignature: response.razorpay_signature,
                 userId: user.email,
-                amount: 50
+                amount: premiumPrice
               })
             });
 
@@ -249,7 +265,7 @@ export default function PaymentTab({
                   <div className="text-[11px] text-zinc-500 mt-0.5">Lifetime platform assessment features</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-bold text-emerald-400">₹50.00</div>
+                  <div className="text-xl font-bold text-emerald-400">₹{premiumPrice.toFixed(2)}</div>
                   <div className="text-[10px] text-zinc-500">One-time payment</div>
                 </div>
               </div>
@@ -334,7 +350,7 @@ export default function PaymentTab({
                     </>
                   ) : (
                     <>
-                      Pay ₹50.00 Securely
+                      Pay ₹{premiumPrice.toFixed(2)} Securely
                     </>
                   )}
                 </button>
