@@ -167,15 +167,16 @@ function connectWithRetry(retries = 5, delay = 3000) {
 }
 connectWithRetry();
 
-// Root route to prevent blank page
+// Root route: Serve built React frontend if available, else API message
 app.get('/', (req, res) => {
+  const distIndex = path.join(__dirname, '../dist/index.html');
+  if (fs.existsSync(distIndex)) {
+    return res.sendFile(distIndex);
+  }
   res.send(`
     <div style="font-family: sans-serif; text-align: center; padding: 50px;">
       <h1 style="color: #2d9e6e;">SkillSwap Backend API is running!</h1>
-      <p>This is the backend API server. To view the user interface, please open the frontend link:</p>
-      <p style="font-size: 18px; font-weight: bold;">
-        <a href="http://localhost:5173" style="color: #1a6b4a; text-decoration: none;">👉 Open Frontend App (http://localhost:5173)</a>
-      </p>
+      <p>This is the backend API server.</p>
     </div>
   `);
 });
