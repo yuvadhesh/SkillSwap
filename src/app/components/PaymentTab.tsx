@@ -59,60 +59,103 @@ export default function PaymentTab({
     fetchHistory();
   }, [user.email]);
 
+  const loadRazorpayScript = () => {
+    return new Promise((resolve) => {
+      const script = document.createElement("script");
+      script.src = "https://checkout.razorpay.com/v1/checkout.js";
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
   const handlePay = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!cardName || !cardNumber || !expiry || !cvv) {
-      toast.error('Please fill in all card details.');
-      return;
-    }
 
     if ((user.paymentCount || 0) >= 2) {
-      toast.error('Maximum of 2 payments allowed per account.');
+      toast.error('Maximum payment limit reached.');
       return;
     }
 
     setLoading(true);
 
     try {
-      // Simulate network request delay for premium feel
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const res = await loadRazorpayScript();
+      if (!res) {
+        toast.error('Razorpay SDK failed to load. Are you online?');
+        setLoading(false);
+        return;
+      }
 
-      const mockTransactionId = 'TXN-' + Math.random().toString(36).substring(2, 11).toUpperCase();
-
-      const res = await fetch(`${API_URL}/api/payments/verify-razorpay`, {
+      // Create Order
+      const createOrderRes = await fetch(`http://localhost:8080/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          email: user.email,
-          razorpay_order_id: 'order_mock_' + mockTransactionId,
-          razorpay_payment_id: mockTransactionId,
-          razorpay_signature: 'mock_signature',
-          amount: 49
+          amount: 50,
+          currency: 'INR',
+          userId: user.email
         })
       });
 
-      const data = await res.json();
-
-      if (res.ok && data.success) {
-        toast.success('Payment processed successfully! Premium active.');
-        onUserUpdate(data.user);
-        
-        // Reset form
-        setCardName('');
-        setCardNumber('');
-        setExpiry('');
-        setCvv('');
-
-        // Refresh history
-        fetchHistory();
-
-        // Redirect to Online Assessment page
-        setTimeout(() => {
-          onTabChange('assessment');
-        }, 1500);
-      } else {
-        toast.error(data.error || 'Payment failed. Please try again.');
+      const orderData = await createOrderRes.json();
+      if (!createOrderRes.ok) {
+        toast.error(orderData.error || 'Failed to create order');
+        setLoading(false);
+        return;
       }
+
+      const options = {
+        key: 'rzp_live_TLBGftRr6F3ORB', // Read from environment in real scenario
+        amount: orderData.amount * 100,
+        currency: orderData.currency,
+        name: 'SkillSwap Premium',
+        description: 'Premium Tier Upgrade',
+        order_id: orderData.orderId,
+        handler: async function (response: any) {
+          try {
+            const verifyRes = await fetch(`http://localhost:8080/api/payment/verify`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                razorpayPaymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+                razorpaySignature: response.razorpay_signature,
+                userId: user.email,
+                amount: 50
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyRes.ok && verifyData.status === 'SUCCESS') {
+              import('canvas-confetti').then((confetti) => {
+                confetti.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
+              });
+              toast.success('Payment processed successfully! Premium active.');
+              
+              // Refresh user context if needed, but per prompt redirect immediately
+              setTimeout(() => {
+                window.location.href = '/dashboard';
+              }, 2000);
+            } else {
+              toast.error('Payment verification failed.');
+            }
+          } catch (err) {
+            toast.error('Payment verification error.');
+          }
+        },
+        prefill: {
+          name: cardName || user.name,
+          email: user.email,
+        },
+        theme: {
+          color: '#f59e0b',
+        }
+      };
+
+      const paymentObject = new (window as any).Razorpay(options);
+      paymentObject.open();
+
     } catch (err) {
       console.error('Payment error:', err);
       toast.error('Could not connect to payment gateway.');
@@ -206,7 +249,7 @@ export default function PaymentTab({
                   <div className="text-[11px] text-zinc-500 mt-0.5">Lifetime platform assessment features</div>
                 </div>
                 <div className="text-right">
-                  <div className="text-xl font-bold text-emerald-400">$49.00</div>
+                  <div className="text-xl font-bold text-emerald-400">₹50.00</div>
                   <div className="text-[10px] text-zinc-500">One-time payment</div>
                 </div>
               </div>
@@ -215,9 +258,9 @@ export default function PaymentTab({
             {isMaxedOut ? (
               <div className="bg-red-950/40 border border-red-500/30 rounded-xl p-4 text-center text-red-300 space-y-2 mb-6">
                 <AlertCircle className="w-8 h-8 text-red-400 mx-auto" />
-                <h4 className="font-bold text-sm">Maximum Payments Reached</h4>
+                <h4 className="font-bold text-sm">Maximum payment limit reached.</h4>
                 <p className="text-xs text-red-400/80">
-                  You have successfully completed 2 online payments. To ensure service safety, a maximum of 2 successful payments is allowed per user.
+                  You have successfully completed 2 online payments.
                 </p>
               </div>
             ) : (
@@ -291,7 +334,7 @@ export default function PaymentTab({
                     </>
                   ) : (
                     <>
-                      Pay $49.00 Securely
+                      Pay ₹50.00 Securely
                     </>
                   )}
                 </button>
@@ -336,7 +379,7 @@ export default function PaymentTab({
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-emerald-400">${record.amount.toFixed(2)}</div>
+                      <div className="font-bold text-emerald-400">₹{record.amount.toFixed(2)}</div>
                       <div className="text-[9px] text-zinc-500 flex items-center gap-0.5 justify-end">
                         <CheckCircle2 className="w-3 h-3 text-emerald-500" /> Successful
                       </div>
