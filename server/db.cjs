@@ -677,12 +677,17 @@ async function getUserFcmTokens(email) {
 
 // Premium Price Helpers
 async function getPremiumPrice() {
-  let priceDoc = await PremiumPrice.findOne();
-  if (!priceDoc) {
-    priceDoc = new PremiumPrice({ premiumPrice: 49, currency: 'INR' });
-    await priceDoc.save();
+  try {
+    let priceDoc = await PremiumPrice.findOne();
+    if (!priceDoc) {
+      priceDoc = new PremiumPrice({ premiumPrice: 49, currency: 'INR' });
+      await priceDoc.save().catch(e => console.error('Save price error:', e));
+    }
+    return priceDoc;
+  } catch (err) {
+    console.error('getPremiumPrice DB error:', err);
+    return { premiumPrice: 49, currency: 'INR' };
   }
-  return priceDoc;
 }
 
 async function updatePremiumPrice(newPrice, updatedByAdmin) {
