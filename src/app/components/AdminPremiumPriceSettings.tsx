@@ -42,21 +42,23 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
       const res = await fetch(`${API_URL}/api/admin/premium-price`, {
         method: 'PUT',
         headers: {
-          'Content-Type': 'application/json',
-          'x-admin-email': adminEmail
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({ premiumPrice: Number(price) })
+        body: JSON.stringify({
+          premiumPrice: Number(price),
+          adminEmail: adminEmail
+        })
       });
       const data = await res.json();
 
-      if (data.success) {
+      if (res.ok && data.success) {
         toast.success(data.message || 'Premium price updated successfully.');
       } else {
         toast.error(data.error || 'Failed to update premium price.');
       }
-    } catch (err) {
-      console.error(err);
-      toast.error('An error occurred while saving the price.');
+    } catch (err: any) {
+      console.error('Price update error:', err);
+      toast.error(err?.message || 'An error occurred while saving the price.');
     } finally {
       setSaving(false);
     }

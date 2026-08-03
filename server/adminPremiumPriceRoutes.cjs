@@ -4,7 +4,7 @@ const db = require('./db.cjs');
 
 // Simple admin verification middleware (matches existing admin route pattern)
 const verifyAdmin = async (req, res, next) => {
-  const adminEmail = req.headers['x-admin-email'] || req.body?.adminEmail;
+  const adminEmail = req.body?.adminEmail || req.headers['x-admin-email'] || req.query?.adminEmail;
   if (!adminEmail) {
     return res.status(403).json({ error: 'Admin email is required.' });
   }

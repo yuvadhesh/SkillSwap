@@ -97,16 +97,7 @@ const io = new Server(server, {
 
 // app.use(cors());
 app.use(cors({
-  origin: function(origin, callback) {
-    // Allow all localhost origins (any port) and production URLs
-    if (!origin || /^http:\/\/localhost(:\d+)?$/.test(origin) ||
-      ['https://skill-swap-seven-eta.vercel.app',
-       'https://skill-swap-hsgx3ysf3-yuvadheshs-projects.vercel.app'].includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: true,
   credentials: true
 }));
 app.use(express.json());
