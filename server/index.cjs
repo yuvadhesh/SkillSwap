@@ -1124,6 +1124,18 @@ io.on('connection', (socket) => {
 
 });
 
+// Serve static frontend files if dist directory exists
+const distFolder = path.join(__dirname, '../dist');
+if (fs.existsSync(distFolder)) {
+  app.use(express.static(distFolder));
+  app.get('(.*)', (req, res, next) => {
+    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
+      return next();
+    }
+    res.sendFile(path.join(distFolder, 'index.html'));
+  });
+}
+
 // Start Server — auto-find next available port if PORT is in use
 function startServer(port) {
   server.listen(port, async () => {
