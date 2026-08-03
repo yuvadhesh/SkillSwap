@@ -11,42 +11,14 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
   const [price, setPrice] = useState<number | ''>('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  
-  // As requested, we simulate or obtain the token. For this mock, we fetch it first.
-  const [token, setToken] = useState<string>('');
 
   useEffect(() => {
-    // Authenticate the admin to get the JWT token needed for updating price
-    const authenticateAdmin = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/admin/premium-price/login-token`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: adminEmail })
-        });
-        const data = await res.json();
-        if (data.success) {
-          setToken(data.token);
-          fetchPrice(data.token);
-        } else {
-          toast.error(data.error || 'Failed to authenticate admin');
-          setLoading(false);
-        }
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      }
-    };
-    authenticateAdmin();
-  }, [adminEmail]);
+    fetchPrice();
+  }, []);
 
-  const fetchPrice = async (jwtToken: string) => {
+  const fetchPrice = async () => {
     try {
-      const res = await fetch(`${API_URL}/api/admin/premium-price`, {
-        headers: {
-          'Authorization': `Bearer ${jwtToken}`
-        }
-      });
+      const res = await fetch(`${API_URL}/api/admin/premium-price`);
       const data = await res.json();
       if (data.success && data.price) {
         setPrice(data.price.premiumPrice);
@@ -71,12 +43,12 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'x-admin-email': adminEmail
         },
         body: JSON.stringify({ premiumPrice: Number(price) })
       });
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success(data.message || 'Premium price updated successfully.');
       } else {
@@ -150,3 +122,4 @@ export default function AdminPremiumPriceSettings({ adminEmail }: AdminPremiumPr
     </div>
   );
 }
+
