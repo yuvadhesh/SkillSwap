@@ -1128,11 +1128,11 @@ io.on('connection', (socket) => {
 const distFolder = path.join(__dirname, '../dist');
 if (fs.existsSync(distFolder)) {
   app.use(express.static(distFolder));
-  app.get('(.*)', (req, res, next) => {
-    if (req.path.startsWith('/api') || req.path.startsWith('/uploads')) {
-      return next();
+  app.use((req, res, next) => {
+    if (req.method === 'GET' && !req.path.startsWith('/api') && !req.path.startsWith('/uploads')) {
+      return res.sendFile(path.join(distFolder, 'index.html'));
     }
-    res.sendFile(path.join(distFolder, 'index.html'));
+    next();
   });
 }
 
