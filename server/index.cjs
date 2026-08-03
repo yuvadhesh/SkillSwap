@@ -723,10 +723,19 @@ app.post('/api/chatbot/message', async (req, res) => {
   
   User message: ${prompt}`;
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.1-flash-lite',
-          contents: promptText
-        });
+        let response;
+        try {
+          response = await ai.models.generateContent({
+            model: 'gemini-1.5-flash',
+            contents: promptText
+          });
+        } catch (mErr) {
+          console.warn("Fallback to gemini-2.5-flash or legacy model:", mErr.message);
+          response = await ai.models.generateContent({
+            model: 'gemini-2.5-flash',
+            contents: promptText
+          });
+        }
         botResponseText = response.text || '';
         if (!botResponseText) {
           throw new Error('Empty response received from Gemini');

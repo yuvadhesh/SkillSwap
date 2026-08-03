@@ -6,3 +6,11 @@ const getApiUrl = () => {
 
 export const API_URL = getApiUrl();
 
+const getPaymentApiUrl = () => {
+  const envUrl = import.meta.env.VITE_PAYMENT_API_URL;
+  if (envUrl) return envUrl;
+  return 'http://localhost:8080';
+};
+
+export const PAYMENT_API_URL = getPaymentApiUrl();
+

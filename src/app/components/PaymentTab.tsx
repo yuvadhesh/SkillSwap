@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CreditCard, ShieldCheck, CheckCircle2, AlertCircle, History, Landmark, DollarSign, Calendar, Lock } from 'lucide-react';
 import { toast } from 'sonner';
-import { API_URL } from '../../config';
+import { API_URL, PAYMENT_API_URL } from '../../config';
 
 interface UserData {
   name: string;
@@ -105,7 +105,7 @@ export default function PaymentTab({
       }
 
       // Create Order
-      const createOrderRes = await fetch(`http://localhost:8080/api/payment/create-order`, {
+      const createOrderRes = await fetch(`${PAYMENT_API_URL}/api/payment/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -131,7 +131,7 @@ export default function PaymentTab({
         order_id: orderData.orderId,
         handler: async function (response: any) {
           try {
-            const verifyRes = await fetch(`http://localhost:8080/api/payment/verify`, {
+            const verifyRes = await fetch(`${PAYMENT_API_URL}/api/payment/verify`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
