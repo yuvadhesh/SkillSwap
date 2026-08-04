@@ -97,15 +97,16 @@ export default function PaymentTab({
     setLoading(true);
 
     try {
-      const res = await loadRazorpayScript();
-      if (!res) {
-        toast.error('Razorpay SDK failed to load. Are you online?');
+      // Load Razorpay SDK
+      const sdkLoaded = await loadRazorpayScript();
+      if (!sdkLoaded) {
+        toast.error('Razorpay SDK failed to load. Check your internet connection.');
         setLoading(false);
         return;
       }
 
-      // Create Order
-      const createOrderRes = await fetch(`${PAYMENT_API_URL}/api/payment/create-order`, {
+      // Create real Razorpay order via Node.js backend
+      const createOrderRes = await fetch(`${API_URL}/api/payments/create-order`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -122,51 +123,68 @@ export default function PaymentTab({
         return;
       }
 
+      // Get Razorpay Key from backend env
+      const keyId = orderData.keyId || import.meta.env.VITE_RAZORPAY_KEY_ID;
+
       const options = {
-        key: 'rzp_live_TLBGftRr6F3ORB', // Read from environment in real scenario
+        key: keyId,
         amount: orderData.amount * 100,
         currency: orderData.currency,
         name: 'SkillSwap Premium',
         description: 'Premium Tier Upgrade',
         order_id: orderData.orderId,
+        prefill: {
+          name: cardName || user.name,
+          email: user.email,
+        },
+        theme: { color: '#f59e0b' },
         handler: async function (response: any) {
           try {
-            const verifyRes = await fetch(`${PAYMENT_API_URL}/api/payment/verify`, {
+            const verifyRes = await fetch(`${API_URL}/api/payments/verify-razorpay`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
-                razorpayPaymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-                razorpaySignature: response.razorpay_signature,
-                userId: user.email,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_signature: response.razorpay_signature,
+                email: user.email,
                 amount: premiumPrice
               })
             });
 
             const verifyData = await verifyRes.json();
-            if (verifyRes.ok && verifyData.status === 'SUCCESS') {
+            if (verifyRes.ok && (verifyData.success || verifyData.status === 'SUCCESS')) {
               import('canvas-confetti').then((confetti) => {
                 confetti.default({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
               });
-              toast.success('Payment processed successfully! Premium active.');
-              
-              // Refresh user context if needed, but per prompt redirect immediately
+              toast.success('Payment successful! Premium activated 🎉');
+
+              // Fetch fresh user data from backend to update isPremium status
+              try {
+                const profileRes = await fetch(`${API_URL}/api/profile/me?email=${encodeURIComponent(user.email)}`);
+                const profileData = await profileRes.json();
+                if (profileRes.ok && profileData.success && profileData.user) {
+                  onUserUpdate(profileData.user);
+                }
+              } catch (e) {
+                console.error('Failed to refresh user profile:', e);
+              }
+
+              // Navigate to assessment tab after 1.5 seconds
               setTimeout(() => {
-                window.location.href = '/dashboard';
-              }, 2000);
+                onTabChange('assessment');
+              }, 1500);
             } else {
-              toast.error('Payment verification failed.');
+              toast.error(verifyData.error || 'Payment verification failed.');
             }
           } catch (err) {
-            toast.error('Payment verification error.');
+            toast.error('Payment verification error. Contact support.');
           }
         },
-        prefill: {
-          name: cardName || user.name,
-          email: user.email,
-        },
-        theme: {
-          color: '#f59e0b',
+        modal: {
+          ondismiss: () => {
+            setLoading(false);
+          }
         }
       };
 
@@ -180,6 +198,8 @@ export default function PaymentTab({
       setLoading(false);
     }
   };
+
+
 
   const formatCardNumber = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');

@@ -4,6 +4,54 @@ const db = require('./db.cjs');
 
 const crypto = require('crypto');
 
+// POST /api/payments/create-order (Real Razorpay Order)
+router.post('/create-order', async (req, res) => {
+  try {
+    const { amount, currency, userId } = req.body;
+
+    const keyId = process.env.RAZORPAY_KEY_ID;
+    const keySecret = process.env.RAZORPAY_KEY_SECRET;
+
+    if (!keyId || !keySecret || keyId.includes('YOUR_KEY')) {
+      return res.status(500).json({ error: 'Razorpay API keys not configured in .env file.' });
+    }
+
+    const orderPayload = {
+      amount: Math.round(amount * 100), // paise
+      currency: currency || 'INR',
+      receipt: `receipt_${userId}_${Date.now()}`
+    };
+
+    const credentials = Buffer.from(`${keyId}:${keySecret}`).toString('base64');
+    const razorpayRes = await fetch('https://api.razorpay.com/v1/orders', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Basic ${credentials}`
+      },
+      body: JSON.stringify(orderPayload)
+    });
+
+    const razorpayData = await razorpayRes.json();
+
+    if (!razorpayRes.ok) {
+      console.error('Razorpay order error:', razorpayData);
+      return res.status(400).json({ error: razorpayData.error?.description || 'Failed to create Razorpay order' });
+    }
+
+    res.json({
+      success: true,
+      orderId: razorpayData.id,
+      amount: razorpayData.amount / 100,
+      currency: razorpayData.currency,
+      keyId: keyId
+    });
+  } catch (err) {
+    console.error('Create order error:', err);
+    res.status(500).json({ error: 'Failed to create order' });
+  }
+});
+
 // POST /api/payments/verify-razorpay
 router.post('/verify-razorpay', async (req, res) => {
   try {
@@ -13,15 +61,21 @@ router.post('/verify-razorpay', async (req, res) => {
       return res.status(400).json({ error: 'Missing required payment verification fields.' });
     }
 
-    // Verify signature
-    const secret = process.env.RAZORPAY_SECRET || 'dummy_secret';
+    // Verify signature using the correct env variable name
+    const secret = process.env.RAZORPAY_KEY_SECRET || process.env.RAZORPAY_SECRET;
+    
+    if (!secret || secret.includes('YOUR_KEY')) {
+      return res.status(500).json({ error: 'Razorpay secret key not configured in .env file.' });
+    }
+
     const generated_signature = crypto
       .createHmac('sha256', secret)
       .update(razorpay_order_id + '|' + razorpay_payment_id)
       .digest('hex');
 
-    // Strict signature check (allowing 'mock_signature' for testing UI without real Razorpay)
-    if (generated_signature !== razorpay_signature && razorpay_signature !== 'mock_signature') {
+    // Strict signature check
+    if (generated_signature !== razorpay_signature) {
+      console.error('Signature mismatch:', { generated: generated_signature, received: razorpay_signature });
       return res.status(400).json({ error: 'Invalid payment signature. Verification failed.' });
     }
 
