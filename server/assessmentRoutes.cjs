@@ -111,23 +111,26 @@ router.post('/create', async (req, res) => {
     const creatorEmail = req.body.creator?.toLowerCase();
     if (!creatorEmail) return res.status(400).json({ error: 'Creator email is required' });
 
-    // Check admin restriction flag:
-    // isPremium = true  => user is RESTRICTED (first assessment free, then blocked)
-    // isPremium = false => user is FREE (unlimited assessments, no restriction)
     const user = await db.User.findOne({ email: creatorEmail });
     if (!user) return res.status(404).json({ error: 'User not found' });
 
-    if (user.isPremium) {
-      // User is restricted - allow only if they haven't created one yet
-      const count = await db.Assessment.countDocuments({ creator: creatorEmail });
-      if (count >= 1) {
-        return res.status(403).json({ 
-          error: 'PREMIUM_REQUIRED', 
-          message: 'Your first assessment was free. Further access requires admin to remove the restriction.' 
-        });
+    const adminSettings = await db.getAdminSettings();
+    const count = await db.Assessment.countDocuments({ creator: creatorEmail });
+    
+    const isPremiumUser = user.isPremium || user.paymentStatus === 'paid' || user.membershipType === 'PREMIUM';
+
+    if (!isPremiumUser) {
+      if (adminSettings.assessmentCreationAccess === 'PREMIUM') {
+        return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: 'Premium membership is required to create assessments.' });
+      }
+      if (count >= adminSettings.freeAssessmentLimit) {
+        return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: `Free users are limited to ${adminSettings.freeAssessmentLimit} assessment(s). Please upgrade to Premium.` });
+      }
+    } else {
+      if (count >= adminSettings.premiumAssessmentLimit) {
+        return res.status(403).json({ error: 'LIMIT_REACHED', message: `You have reached your limit of ${adminSettings.premiumAssessmentLimit} assessment(s).` });
       }
     }
-    // If isPremium is false, no restriction — allow unlimited
 
     const assessment = new db.Assessment(req.body);
     await assessment.save();
@@ -256,6 +259,13 @@ router.post('/:id/start', async (req, res) => {
 
     if (assessment.partner !== learner.toLowerCase()) {
       return res.status(403).json({ error: 'You are not assigned to this assessment' });
+    }
+
+    const adminSettings = await db.getAdminSettings();
+    const user = await db.getUserByEmail(learner);
+
+    if (!user.isPremium && adminSettings.assessmentWritingAccess === 'PREMIUM') {
+      return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: 'Premium membership is required to attempt assessments.' });
     }
 
     // Check attempts

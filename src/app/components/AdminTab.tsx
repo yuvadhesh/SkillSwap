@@ -12,6 +12,7 @@ import {
 } from 'recharts';
 import AdminMembershipManagement from './AdminMembershipManagement';
 import AdminPremiumPriceSettings from './AdminPremiumPriceSettings';
+import AdminPremiumAccessSettings from './AdminPremiumAccessSettings';
 import UnauthorizedPage from './UnauthorizedPage';
 
 interface UserData {
@@ -52,7 +53,7 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
     wantedSkills: []
   });
   const [loading, setLoading] = useState(true);
-  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'analytics' | 'reports' | 'settings' | 'payments'>('dashboard');
+  const [activeSubTab, setActiveSubTab] = useState<'dashboard' | 'users' | 'analytics' | 'reports' | 'settings' | 'payments' | 'access'>('dashboard');
   
   // Assessment Reports State
   const [testReports, setTestReports] = useState<{ attempts: any[]; dailyStats: any[] }>({ attempts: [], dailyStats: [] });
@@ -474,6 +475,16 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
           }`}
         >
           Payment Management
+        </button>
+        <button
+          onClick={() => setActiveSubTab('access')}
+          className={`px-4 py-3 text-xs font-semibold border-b-2 transition-all cursor-pointer whitespace-nowrap min-h-[44px] ${
+            activeSubTab === 'access'
+              ? 'border-[var(--brand)] text-[var(--brand)]'
+              : 'border-transparent text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          Access Control
         </button>
       </div>
 
@@ -1345,6 +1356,14 @@ export default function AdminTab({ currentUser }: { currentUser: any }) {
       {activeSubTab === 'settings' && (
         <AdminPremiumPriceSettings adminEmail={currentUser.email} />
       )}
+
+      {/* SUB TAB ACCESS CONTROL */}
+      {activeSubTab === 'access' && (
+        <div className="animate-fadeIn">
+          <AdminPremiumAccessSettings adminEmail={currentUser.email} onAddLog={addLog} />
+        </div>
+      )}
     </div>
   );
 }
+

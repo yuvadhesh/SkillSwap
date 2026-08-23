@@ -60,7 +60,7 @@ export default function AssessmentCreation({ user, acceptedSwaps, onBack, onCrea
         if (data.error === 'PREMIUM_REQUIRED') {
           setShowPremiumPrompt(true);
         } else {
-          toast.error(data.error || 'Failed to create assessment');
+          toast.error(data.message || data.error || 'Failed to create assessment');
         }
       }
     } catch (err) {

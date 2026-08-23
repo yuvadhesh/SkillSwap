@@ -917,23 +917,7 @@ function DashboardPage({ activeTab, onTabChange, user, onLogout, onUserUpdate, s
               <SettingsTab user={user} onUserUpdate={onUserUpdate} onLogout={onLogout} />
             )}
             {activeTab === 'assessment' && (
-              (user.isPremium || user.paymentStatus === 'paid' || user.membershipType === 'PREMIUM')
-                ? <AssessmentTab user={user} requests={requests} />
-                : (() => {
-                    // Redirect unpaid users to the payment tab
-                    setTimeout(() => onTabChange('payment'), 0);
-                    return (
-                      <div className="flex flex-col items-center justify-center py-20 gap-4 text-center px-4">
-                        <div className="w-16 h-16 rounded-full bg-amber-100 border border-amber-300 flex items-center justify-center mb-2">
-                          <CreditCard className="w-8 h-8 text-amber-600" />
-                        </div>
-                        <h3 className="text-lg font-bold">Premium Access Required</h3>
-                        <p className="text-sm text-muted-foreground max-w-xs">
-                          Online Assessments require a premium subscription. Redirecting you to the Payment page…
-                        </p>
-                      </div>
-                    );
-                  })()
+              <AssessmentTab user={user} requests={requests} onUpgradeRequested={() => onTabChange('payment')} />
             )}
             {activeTab === 'payment' && (
               <PaymentTab user={user} onUserUpdate={onUserUpdate} onTabChange={onTabChange} />

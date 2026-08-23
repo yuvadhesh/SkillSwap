@@ -9,14 +9,18 @@ import QuestionManagement from './QuestionManagement';
 interface AssessmentTabProps {
   user: any;
   requests: any;
+  onUpgradeRequested?: () => void;
 }
 
-export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
+export default function AssessmentTab({ user, requests, onUpgradeRequested }: AssessmentTabProps) {
   const [activeView, setActiveView] = useState<'dashboard' | 'create' | 'questions' | 'runner'>('dashboard');
   const [dashboardData, setDashboardData] = useState<{ created: any[]; assigned: any[]; completed: any[] } | null>(null);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [activeAssessment, setActiveAssessment] = useState<any>(null);
+  const [adminSettings, setAdminSettings] = useState<{ assessmentCreationAccess: string; assessmentWritingAccess: string } | null>(null);
+
+  const isUserPremium = user?.isPremium || user?.paymentStatus === 'paid' || user?.membershipType === 'PREMIUM';
 
   // Accepted swaps — handle requests as { incoming, outgoing } or array
   const allRequests = Array.isArray(requests)
@@ -28,6 +32,14 @@ export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
       req.status === 'accepted' &&
       (req.sender === user?.email || req.receiver === user?.email)
   );
+
+  useEffect(() => {
+    // Fetch admin settings to determine access policies
+    fetch(`${API_URL}/api/admin/settings`)
+      .then(r => r.json())
+      .then(data => { if (data.success && data.settings) setAdminSettings(data.settings); })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (activeView === 'dashboard') {
@@ -156,25 +168,46 @@ export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
           </h1>
           <p style={{ color: '#4b5563', margin: '6px 0 0' }}>Validate skills through secure testing</p>
         </div>
-        <button
-          onClick={() => setActiveView('create')}
-          style={{
-            background: 'var(--color-accent)',
-            color: '#fff',
-            border: 'none',
-            padding: '12px 20px',
-            borderRadius: '12px',
-            fontWeight: 700,
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            fontSize: '14px',
-          }}
-        >
-          <Plus style={{ width: 18, height: 18 }} />
-          Create Assessment
-        </button>
+        {adminSettings?.assessmentCreationAccess === 'PREMIUM' && !isUserPremium ? (
+          <button
+            onClick={() => onUpgradeRequested?.()}
+            style={{
+              background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+            }}
+          >
+            🔒 Upgrade to Create
+          </button>
+        ) : (
+          <button
+            onClick={() => setActiveView('create')}
+            style={{
+              background: 'var(--color-accent)',
+              color: '#fff',
+              border: 'none',
+              padding: '12px 20px',
+              borderRadius: '12px',
+              fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontSize: '14px',
+            }}
+          >
+            <Plus style={{ width: 18, height: 18 }} />
+            Create Assessment
+          </button>
+        )}
       </div>
 
       {/* Loading */}
@@ -237,7 +270,28 @@ export default function AssessmentTab({ user, requests }: AssessmentTabProps) {
 
             {/* Available to Take */}
             <Panel title="Available to Take" icon={<Clock style={{ width: 18, height: 18, color: '#60a5fa' }} />}>
-              {dashboardData.assigned.length === 0 ? (
+              {adminSettings?.assessmentWritingAccess === 'PREMIUM' && !isUserPremium ? (
+                <div style={{ textAlign: 'center', padding: '24px 0' }}>
+                  <p style={{ color: '#6b7280', fontSize: '14px', marginBottom: '12px' }}>
+                    🔒 Attempting assessments requires a Premium subscription.
+                  </p>
+                  <button
+                    onClick={() => onUpgradeRequested?.()}
+                    style={{
+                      background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                      color: '#fff',
+                      border: 'none',
+                      padding: '8px 18px',
+                      borderRadius: '8px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: '13px',
+                    }}
+                  >
+                    Upgrade to Premium
+                  </button>
+                </div>
+              ) : dashboardData.assigned.length === 0 ? (
                 <p style={{ color: '#6b7280', textAlign: 'center', padding: '24px 0', fontSize: '14px' }}>
                   No assessments assigned to you yet.
                 </p>

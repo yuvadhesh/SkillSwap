@@ -178,6 +178,24 @@ const premiumPriceSchema = new mongoose.Schema({
 
 const PremiumPrice = mongoose.model('PremiumPrice', premiumPriceSchema);
 
+// Admin Settings Schema
+const adminSettingsSchema = new mongoose.Schema({
+  assessmentCreationAccess: { type: String, enum: ['FREE', 'PREMIUM'], default: 'FREE' },
+  assessmentWritingAccess: { type: String, enum: ['FREE', 'PREMIUM'], default: 'FREE' },
+  freeAssessmentLimit: { type: Number, default: 1 },
+  premiumAssessmentLimit: { type: Number, default: 9999 },
+  maxTabSwitches: { type: Number, default: 3 },
+  maxFullscreenExits: { type: Number, default: 2 },
+  maxCopyAttempts: { type: Number, default: 3 },
+  maxAiDetectionWarnings: { type: Number, default: 1 },
+  autoSubmit: { type: Boolean, default: true },
+  terminateAssessment: { type: Boolean, default: true },
+  lastUpdated: { type: Date, default: Date.now },
+  updatedBy: { type: String }
+});
+
+const AdminSettings = mongoose.model('AdminSettings', adminSettingsSchema);
+
 // User CRUD Helpers
 async function getUserByEmail(email) {
   if (!email) return null;
@@ -703,6 +721,34 @@ async function updatePremiumPrice(newPrice, updatedByAdmin) {
   return priceDoc;
 }
 
+// Admin Settings Helpers
+async function getAdminSettings() {
+  try {
+    let settingsDoc = await AdminSettings.findOne();
+    if (!settingsDoc) {
+      settingsDoc = new AdminSettings();
+      await settingsDoc.save().catch(e => console.error('Save settings error:', e));
+    }
+    return settingsDoc;
+  } catch (err) {
+    console.error('getAdminSettings DB error:', err);
+    return { assessmentCreationAccess: 'FREE', assessmentWritingAccess: 'FREE', freeAssessmentLimit: 1, premiumAssessmentLimit: 9999, maxTabSwitches: 3, maxFullscreenExits: 2, maxCopyAttempts: 3, maxAiDetectionWarnings: 1, autoSubmit: true, terminateAssessment: true };
+  }
+}
+
+async function updateAdminSettings(updates, updatedByAdmin) {
+  let settingsDoc = await AdminSettings.findOne();
+  if (!settingsDoc) {
+    settingsDoc = new AdminSettings({ ...updates, updatedBy: updatedByAdmin });
+  } else {
+    Object.assign(settingsDoc, updates);
+    settingsDoc.lastUpdated = new Date();
+    settingsDoc.updatedBy = updatedByAdmin;
+  }
+  await settingsDoc.save();
+  return settingsDoc;
+}
+
 module.exports = {
   getUserByEmail,
   createUser,
@@ -743,5 +789,8 @@ module.exports = {
   AdminLog,
   PremiumPrice,
   getPremiumPrice,
-  updatePremiumPrice
+  updatePremiumPrice,
+  AdminSettings,
+  getAdminSettings,
+  updateAdminSettings
 };
