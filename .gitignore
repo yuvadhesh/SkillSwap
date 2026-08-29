@@ -27,3 +27,7 @@ Thumbs.db
 
 # Firebase local emulators
 .firebase/
+target/
+node_modules/
+.env
+dist/
