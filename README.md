@@ -88,7 +88,7 @@ Add screenshots of:
 
 ## 🌐 Live Demo
 
-[YOUR_LIVE_DEMO_LINK](https://skill-swap-rs7n.vercel.app/)
+https://skill-swap-rs7n.vercel.app/
 
 ## 📂 Repository
 
