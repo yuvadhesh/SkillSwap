@@ -275,7 +275,8 @@ router.post('/:id/start', async (req, res) => {
     }
 
     if (adminSettings.assessmentWritingAccess === 'PREMIUM') {
-      if (!user.isPremium) {
+      const isPremiumUser = user.isPremium || user.paymentStatus === 'paid' || user.membershipType === 'PREMIUM';
+      if (!isPremiumUser) {
         const isFirstAttempt = previousAttemptsCount === 0;
         const requiresPremium = assessment.premiumPolicy?.requirePremium;
         const firstAttemptFree = assessment.premiumPolicy?.firstAttemptFree;
