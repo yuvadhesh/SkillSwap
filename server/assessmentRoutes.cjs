@@ -121,10 +121,9 @@ router.post('/create', async (req, res) => {
 
     if (!isPremiumUser) {
       if (adminSettings.assessmentCreationAccess === 'PREMIUM') {
-        return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: 'Premium membership is required to create assessments.' });
-      }
-      if (count >= adminSettings.freeAssessmentLimit) {
-        return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: `Free users are limited to ${adminSettings.freeAssessmentLimit} assessment(s). Please upgrade to Premium.` });
+        if (count >= adminSettings.freeAssessmentLimit) {
+          return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: `Free users are limited to ${adminSettings.freeAssessmentLimit} assessment(s). Please upgrade to Premium.` });
+        }
       }
     } else {
       if (count >= adminSettings.premiumAssessmentLimit) {
@@ -264,10 +263,6 @@ router.post('/:id/start', async (req, res) => {
     const adminSettings = await db.getAdminSettings();
     const user = await db.getUserByEmail(learner);
 
-    if (!user.isPremium && adminSettings.assessmentWritingAccess === 'PREMIUM') {
-      return res.status(403).json({ error: 'PREMIUM_REQUIRED', message: 'Premium membership is required to attempt assessments.' });
-    }
-
     // Check attempts
     const previousAttemptsCount = await db.AssessmentAttempt.countDocuments({ 
       assessmentId: req.params.id, 
@@ -279,18 +274,18 @@ router.post('/:id/start', async (req, res) => {
       return res.status(403).json({ error: 'Maximum attempts reached' });
     }
 
-    // Premium Check (if required by policy and not first attempt, or always required)
-    const isFirstAttempt = previousAttemptsCount === 0;
-    const requiresPremium = assessment.premiumPolicy?.requirePremium;
-    const firstAttemptFree = assessment.premiumPolicy?.firstAttemptFree;
-    
-    if (requiresPremium && (!isFirstAttempt || !firstAttemptFree)) {
-      const user = await db.getUserByEmail(learner);
+    if (adminSettings.assessmentWritingAccess === 'PREMIUM') {
       if (!user.isPremium) {
-        return res.status(403).json({ 
-          error: 'Premium required', 
-          message: 'Your free attempt has already been used. Upgrade to Premium to continue.' 
-        });
+        const isFirstAttempt = previousAttemptsCount === 0;
+        const requiresPremium = assessment.premiumPolicy?.requirePremium;
+        const firstAttemptFree = assessment.premiumPolicy?.firstAttemptFree;
+        
+        if (requiresPremium && (!isFirstAttempt || !firstAttemptFree)) {
+          return res.status(403).json({ 
+            error: 'Premium required', 
+            message: 'Your free attempt has already been used. Upgrade to Premium to continue.' 
+          });
+        }
       }
     }
 
